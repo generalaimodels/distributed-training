@@ -1,8 +1,10 @@
 "use client";
 
 import { startTransition, useEffect, useEffectEvent, useRef, useState } from "react";
+import type { MouseEvent } from "react";
 
 import type { DocumentHeading } from "@/lib/content-types";
+import { getReaderOffset, scrollToAnchorId } from "@/lib/reader-scroll";
 import { useReaderStateActions } from "@/components/reader-state";
 
 interface ReaderTocProps {
@@ -13,11 +15,6 @@ interface ReaderTocProps {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
-}
-
-function getReaderOffset(): number {
-  const siteHeader = document.querySelector<HTMLElement>(".site-header");
-  return (siteHeader?.offsetHeight ?? 112) + 20;
 }
 
 export function ReaderToc({ collectionLabel, documentTitle, headings }: ReaderTocProps) {
@@ -131,6 +128,27 @@ export function ReaderToc({ collectionLabel, documentTitle, headings }: ReaderTo
   }, [clearReaderState, collectionLabel, documentTitle, headings, replaceReaderState]);
 
   useEffect(() => {
+    const syncHashTarget = () => {
+      const hash = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+
+      if (!hash) {
+        return;
+      }
+
+      window.requestAnimationFrame(() => {
+        scrollToAnchorId(hash);
+      });
+    };
+
+    syncHashTarget();
+    window.addEventListener("hashchange", syncHashTarget);
+
+    return () => {
+      window.removeEventListener("hashchange", syncHashTarget);
+    };
+  }, [headings]);
+
+  useEffect(() => {
     const activeLink = tocRef.current?.querySelector<HTMLAnchorElement>(`a[data-heading-id="${activeId ?? ""}"]`);
 
     activeLink?.scrollIntoView({
@@ -138,6 +156,15 @@ export function ReaderToc({ collectionLabel, documentTitle, headings }: ReaderTo
       block: "nearest",
     });
   }, [activeId]);
+
+  const handleHeadingClick = (event: MouseEvent<HTMLAnchorElement>, headingId: string) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    scrollToAnchorId(headingId);
+  };
 
   if (headings.length === 0) {
     return (
@@ -165,6 +192,7 @@ export function ReaderToc({ collectionLabel, documentTitle, headings }: ReaderTo
               key={heading.id}
               href={`#${heading.id}`}
               data-heading-id={heading.id}
+              onClick={(event) => handleHeadingClick(event, heading.id)}
               className={active ? `toc-link toc-link-active toc-depth-${heading.depth}` : `toc-link toc-depth-${heading.depth}`}
             >
               {heading.text}

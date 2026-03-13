@@ -85,9 +85,11 @@ export function SiteHeader() {
         {readingState ? (
           <div className="header-reading-bar" aria-live="polite">
             <div className="header-reading-copy">
-              <span className="header-reading-chip">{readingState.collectionLabel}</span>
               <div className="header-reading-text">
-                <strong className="header-reading-title">{readingState.documentTitle}</strong>
+                <div className="header-reading-title-row">
+                  <span className="header-reading-chip">{readingState.collectionLabel}</span>
+                  <strong className="header-reading-title">{readingState.documentTitle}</strong>
+                </div>
                 <span className="header-reading-section">{readingState.activeHeading ?? "Reading overview"}</span>
               </div>
             </div>

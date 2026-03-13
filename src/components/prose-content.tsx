@@ -5,6 +5,8 @@ import type { MouseEvent } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { scrollToAnchorId } from "@/lib/reader-scroll";
+
 interface ProseContentProps {
   html: string;
 }
@@ -43,11 +45,25 @@ export function ProseContent({ html }: ProseContentProps) {
 
       if (
         !href ||
-        href.startsWith("#") ||
         anchor.target === "_blank" ||
-        anchor.hasAttribute("download") ||
-        !INTERNAL_ROUTE_EXPRESSION.test(href)
+        anchor.hasAttribute("download")
       ) {
+        return;
+      }
+
+      if (href.startsWith("#")) {
+        const anchorId = decodeURIComponent(href.slice(1));
+
+        if (!anchorId) {
+          return;
+        }
+
+        event.preventDefault();
+        scrollToAnchorId(anchorId);
+        return;
+      }
+
+      if (!INTERNAL_ROUTE_EXPRESSION.test(href)) {
         return;
       }
 
