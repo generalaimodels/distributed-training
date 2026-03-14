@@ -10,6 +10,7 @@ import { useReaderStateActions } from "@/components/reader-state";
 interface ReaderTocProps {
   collectionLabel: string;
   documentTitle: string;
+  focusMode: boolean;
   headings: DocumentHeading[];
 }
 
@@ -17,7 +18,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-export function ReaderToc({ collectionLabel, documentTitle, headings }: ReaderTocProps) {
+export function ReaderToc({ collectionLabel, documentTitle, focusMode, headings }: ReaderTocProps) {
   const { clearReaderState, patchReaderState, replaceReaderState } = useReaderStateActions();
   const [activeId, setActiveId] = useState<string | null>(headings[0]?.id ?? null);
   const [progress, setProgress] = useState(0);
@@ -149,13 +150,17 @@ export function ReaderToc({ collectionLabel, documentTitle, headings }: ReaderTo
   }, [headings]);
 
   useEffect(() => {
+    if (focusMode) {
+      return;
+    }
+
     const activeLink = tocRef.current?.querySelector<HTMLAnchorElement>(`a[data-heading-id="${activeId ?? ""}"]`);
 
     activeLink?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
     });
-  }, [activeId]);
+  }, [activeId, focusMode]);
 
   const handleHeadingClick = (event: MouseEvent<HTMLAnchorElement>, headingId: string) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
@@ -165,6 +170,10 @@ export function ReaderToc({ collectionLabel, documentTitle, headings }: ReaderTo
     event.preventDefault();
     scrollToAnchorId(headingId);
   };
+
+  if (focusMode) {
+    return null;
+  }
 
   if (headings.length === 0) {
     return (

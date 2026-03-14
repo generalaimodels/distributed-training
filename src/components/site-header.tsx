@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { ChangeEvent } from "react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import {
+  READER_SIDEBAR_MAX,
+  READER_SIDEBAR_MIN,
+  useReaderLayoutActions,
+  useReaderLayoutState,
+} from "@/components/reader-layout-state";
 import { useReaderState } from "@/components/reader-state";
 
 const NAV_ITEMS = [
@@ -24,11 +31,18 @@ function isActiveRoute(pathname: string, href: string): boolean {
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { focusMode, sidebarWidth } = useReaderLayoutState();
+  const { setSidebarWidth, toggleFocusMode } = useReaderLayoutActions();
   const readerState = useReaderState();
   const headerRef = useRef<HTMLElement | null>(null);
   const isDocRoute = pathname.startsWith("/docs/");
   const readingState = isDocRoute ? readerState : null;
   const progressValue = Math.round((readingState?.progress ?? 0) * 100);
+  const readerSpaceValue = Math.round(((READER_SIDEBAR_MAX - sidebarWidth) / (READER_SIDEBAR_MAX - READER_SIDEBAR_MIN)) * 100);
+
+  const handleSidebarWidthChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSidebarWidth(Number.parseInt(event.target.value, 10));
+  };
 
   useEffect(() => {
     const headerElement = headerRef.current;
@@ -94,9 +108,59 @@ export function SiteHeader() {
               </div>
             </div>
             <div className="header-reading-progress">
-              <span className="header-reading-progress-label">{progressValue}% read</span>
+              <div className="header-reading-progress-row">
+                <span className="header-reading-progress-label">{progressValue}% read</span>
+                <button
+                  type="button"
+                  className={focusMode ? "reader-header-toggle reader-header-toggle-active" : "reader-header-toggle"}
+                  aria-pressed={focusMode}
+                  aria-label={focusMode ? "Show outline and reduce content width" : "Minimize outline and maximize reading space"}
+                  onClick={toggleFocusMode}
+                >
+                  <span className="reader-header-toggle-icon" aria-hidden="true">
+                    <span className="reader-header-toggle-pane reader-header-toggle-pane-main" />
+                    <span className="reader-header-toggle-pane reader-header-toggle-pane-side" />
+                  </span>
+                  <span className="reader-header-toggle-label">{focusMode ? "Show outline" : "Focus read"}</span>
+                </button>
+              </div>
               <div className="header-progress-track" aria-hidden="true">
                 <span className="header-progress-value" style={{ transform: `scaleX(${readingState.progress})` }} />
+              </div>
+              <div className={focusMode ? "header-reading-layout header-reading-layout-disabled" : "header-reading-layout"}>
+                <button
+                  type="button"
+                  className="reader-width-step"
+                  aria-label="Give more width to the article"
+                  disabled={focusMode || sidebarWidth <= READER_SIDEBAR_MIN}
+                  onClick={() => setSidebarWidth(sidebarWidth - 16)}
+                >
+                  <span aria-hidden="true">-</span>
+                </button>
+                <label className="reader-width-range-shell">
+                  <span className="reader-width-range-label">Reader space</span>
+                  <input
+                    type="range"
+                    min={READER_SIDEBAR_MIN}
+                    max={READER_SIDEBAR_MAX}
+                    step={4}
+                    value={sidebarWidth}
+                    disabled={focusMode}
+                    onChange={handleSidebarWidthChange}
+                    className="reader-width-range"
+                    aria-label="Adjust the outline width"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="reader-width-step"
+                  aria-label="Give more width to the outline"
+                  disabled={focusMode || sidebarWidth >= READER_SIDEBAR_MAX}
+                  onClick={() => setSidebarWidth(sidebarWidth + 16)}
+                >
+                  <span aria-hidden="true">+</span>
+                </button>
+                <span className="reader-width-value">{focusMode ? "Focus" : `${readerSpaceValue}% space`}</span>
               </div>
             </div>
           </div>

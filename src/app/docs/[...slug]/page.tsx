@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { DocCard } from "@/components/doc-card";
 import { MermaidLoader } from "@/components/mermaid-loader";
 import { ProseContent } from "@/components/prose-content";
-import { ReaderToc } from "@/components/reader-toc";
+import { ReaderLayout } from "@/components/reader-layout";
 import { TagPill } from "@/components/tag-pill";
 import { getAllDocuments, getDocumentBySlug, getMoreDocumentsFromSameFolder, getRelatedDocuments } from "@/lib/content";
 import { formatLongDate } from "@/lib/formatting";
@@ -86,46 +86,22 @@ export default async function DocPage({ params }: DocPageProps) {
         </div>
       </section>
 
-      <section className="doc-grid-layout">
+      <ReaderLayout
+        authors={document.authors}
+        collectionLabel={document.collection.label}
+        documentTitle={document.title}
+        features={document.features}
+        folderLabel={document.folderLabel}
+        folderRelativePath={document.folderRelativePath}
+        folderUrl={document.folderUrl}
+        headings={tocHeadings}
+        relativePath={document.relativePath}
+      >
         <div className="doc-content-panel">
           {document.features.hasMermaid ? <MermaidLoader /> : null}
           <ProseContent html={document.html} />
         </div>
-        <aside className="doc-aside">
-          <ReaderToc collectionLabel={document.collection.label} documentTitle={document.title} headings={tocHeadings} />
-          <div className="aside-card">
-            <h2>Document data</h2>
-            <dl className="meta-list">
-              <div>
-                <dt>Path</dt>
-                <dd>{document.relativePath}</dd>
-              </div>
-              <div>
-                <dt>Folder</dt>
-                <dd>
-                  <Link href={document.folderUrl}>{document.folderRelativePath || "Repository root"}</Link>
-                </dd>
-              </div>
-              <div>
-                <dt>Authors</dt>
-                <dd>{document.authors.length > 0 ? document.authors.join(", ") : "Repository content"}</dd>
-              </div>
-              <div>
-                <dt>Features</dt>
-                <dd>
-                  {[
-                    document.features.hasRawHtml ? "raw HTML" : null,
-                    document.features.hasMath ? "math" : null,
-                    document.features.hasMermaid ? "mermaid" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "markdown"}
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </aside>
-      </section>
+      </ReaderLayout>
 
       {sameFolderDocuments.length > 0 ? (
         <section className="section-block">

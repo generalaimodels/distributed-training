@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import "katex/dist/katex.min.css";
 
+import { ReaderLayoutStateProvider } from "@/components/reader-layout-state";
 import { ReaderStateProvider } from "@/components/reader-state";
 import { SiteHeader } from "@/components/site-header";
 
@@ -31,17 +32,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={`${displayFont.variable} ${bodyFont.variable}`}>
-        <ReaderStateProvider>
-          <div className="site-orb site-orb-left" />
-          <div className="site-orb site-orb-right" />
-          <SiteHeader />
-          <main className="site-main">{children}</main>
-          <footer className="site-footer">
-            <div className="container footer-inner">
-              <p>Markdown, math, code, media, callouts, raw HTML, and future content folders all flow through one TypeScript renderer.</p>
-            </div>
-          </footer>
-        </ReaderStateProvider>
+        <ReaderLayoutStateProvider>
+          <ReaderStateProvider>
+            <div className="site-orb site-orb-left" />
+            <div className="site-orb site-orb-right" />
+            <SiteHeader />
+            <main className="site-main">{children}</main>
+            <footer className="site-footer">
+              <div className="container footer-inner">
+                <p>Markdown, math, code, media, callouts, raw HTML, and future content folders all flow through one TypeScript renderer.</p>
+              </div>
+            </footer>
+          </ReaderStateProvider>
+        </ReaderLayoutStateProvider>
       </body>
     </html>
   );
