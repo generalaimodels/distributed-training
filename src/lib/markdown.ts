@@ -64,6 +64,44 @@ const SEMANTIC_DIRECTIVE_TAGS = new Set([
   "ol",
   "li",
 ]);
+const BLOCK_LAYOUT_TAGS = new Set([
+  "address",
+  "article",
+  "aside",
+  "blockquote",
+  "details",
+  "div",
+  "dl",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "hr",
+  "li",
+  "main",
+  "nav",
+  "ol",
+  "p",
+  "pre",
+  "section",
+  "summary",
+  "table",
+  "tbody",
+  "td",
+  "tfoot",
+  "th",
+  "thead",
+  "tr",
+  "ul",
+]);
 
 function extractHastText(node: any): string {
   if (!node) {
@@ -81,6 +119,59 @@ function extractHastText(node: any): string {
   return node.children.map((child: any) => extractHastText(child)).join("");
 }
 
+function getClassNames(properties: Record<string, unknown> | undefined): string[] {
+  const value = properties?.className;
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) =>
+      String(item)
+        .split(/\s+/)
+        .map((className) => className.trim())
+        .filter(Boolean),
+    );
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/\s+/)
+      .map((className) => className.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function isWhitespaceTextNode(node: any): boolean {
+  return node?.type === "text" && !/\S/.test(String(node.value ?? ""));
+}
+
+function trimNodeRun(nodes: any[]): any[] {
+  let start = 0;
+  let end = nodes.length;
+
+  while (start < end && isWhitespaceTextNode(nodes[start])) {
+    start += 1;
+  }
+
+  while (end > start && isWhitespaceTextNode(nodes[end - 1])) {
+    end -= 1;
+  }
+
+  return nodes.slice(start, end);
+}
+
+function isParagraphRunNode(node: any): boolean {
+  if (node?.type === "text") {
+    return /\S/.test(String(node.value ?? ""));
+  }
+
+  if (node?.type !== "element") {
+    return false;
+  }
+
+  return !BLOCK_LAYOUT_TAGS.has(String(node.tagName ?? "").toLowerCase());
+}
+
 function parseInlineImageSet(source: string, rewriter: (value: string) => string): string {
   return source
     .split(",")
@@ -95,6 +186,31 @@ function parseInlineImageSet(source: string, rewriter: (value: string) => string
       return parts.join(" ");
     })
     .join(", ");
+}
+
+function normalizeLegacyCenteredDivs(content: string): string {
+  return content.replace(/<div\b([^>]*)>/gi, (match, rawAttributes: string) => {
+    if (!/\balign\s*=\s*(['"]?)center\1/i.test(rawAttributes)) {
+      return match;
+    }
+
+    let normalizedAttributes = rawAttributes.replace(/\s*\balign\s*=\s*(['"]?)center\1/gi, "");
+
+    if (/\bclass\s*=\s*(['"])([^'"]*)\1/i.test(normalizedAttributes)) {
+      normalizedAttributes = normalizedAttributes.replace(/\bclass\s*=\s*(['"])([^'"]*)\1/i, (_fullMatch, quote: string, value: string) => {
+        const classNames = [...new Set(`${value} legacy-center-block`.split(/\s+/).map((item) => item.trim()).filter(Boolean))];
+        return ` class=${quote}${classNames.join(" ")}${quote}`;
+      });
+    } else {
+      normalizedAttributes = `${normalizedAttributes} class="legacy-center-block"`;
+    }
+
+    return `<div${normalizedAttributes}>`;
+  });
+}
+
+function normalizeMarkdownSource(content: string): string {
+  return normalizeLegacyCenteredDivs(content).replace(/\((\s*):(\d{2,5})(\s*)\)/g, "($1\\:$2$3)");
 }
 
 function directoryHasMarkdown(directoryPath: string): boolean {
@@ -187,12 +303,22 @@ function resolveLocalUrl(relativeDocumentPath: string, rawUrl: string, attribute
 
 function remarkDirectiveRenderer() {
   return (tree: MdastRoot) => {
-    visit(tree, (node: any) => {
+    visit(tree, (node: any, index: number | undefined, parent: any) => {
       if (!["containerDirective", "leafDirective", "textDirective"].includes(node.type)) {
-        return false;
+        return;
       }
 
       const name = String(node.name ?? "div").toLowerCase();
+      const isNameRenderableDirective = /^[a-z][a-z0-9-]*$/i.test(name);
+
+      if (!isNameRenderableDirective && parent && typeof index === "number") {
+        parent.children[index] = {
+          type: "text",
+          value: `:${String(node.name ?? "").trim()}`,
+        };
+        return false;
+      }
+
       const isInline = node.type === "textDirective";
       const className = ["directive", `directive-${name}`];
       const properties: Record<string, unknown> = {};
@@ -350,6 +476,106 @@ function rehypeWrapTables() {
   };
 }
 
+function rehypeNormalizeLegacyCenteredBlocks() {
+  return (tree: HastRoot) => {
+    visit(tree, "element", (node: any, index: number | undefined, parent: any) => {
+      if (node.tagName !== "div") {
+        return;
+      }
+
+      const align = String(node.properties?.align ?? "").toLowerCase();
+
+      if (align !== "center") {
+        return;
+      }
+
+      const children = trimNodeRun(Array.isArray(node.children) ? node.children : []);
+
+      delete node.properties.align;
+
+      if (
+        parent &&
+        typeof index === "number" &&
+        children.length === 1 &&
+        children[0]?.type === "element" &&
+        /^h[1-6]$/.test(String(children[0].tagName ?? ""))
+      ) {
+        parent.children[index] = children[0];
+        return false;
+      }
+
+      node.properties.className = [...new Set([...getClassNames(node.properties), "legacy-center-block"])];
+      return false;
+    });
+  };
+}
+
+function rehypeWrapLooseParagraphRuns() {
+  return (tree: HastRoot) => {
+    visit(tree, (node: any) => {
+      if (!Array.isArray(node.children)) {
+        return false;
+      }
+
+      if (node.type === "element") {
+        const tagName = String(node.tagName ?? "").toLowerCase();
+        const classNames = getClassNames(node.properties);
+
+        if (
+          BLOCK_LAYOUT_TAGS.has(tagName) &&
+          tagName !== "article" &&
+          tagName !== "div" &&
+          tagName !== "section" &&
+          tagName !== "aside" &&
+          tagName !== "main"
+        ) {
+          return false;
+        }
+
+        if (classNames.includes("table-wrap") || classNames.includes("legacy-center-block")) {
+          return false;
+        }
+      }
+
+      const nextChildren: any[] = [];
+      let paragraphRun: any[] = [];
+
+      const flushParagraphRun = () => {
+        if (paragraphRun.length === 0) {
+          return;
+        }
+
+        const trimmedRun = trimNodeRun(paragraphRun);
+
+        if (trimmedRun.length > 0) {
+          nextChildren.push({
+            type: "element",
+            tagName: "p",
+            properties: {},
+            children: trimmedRun,
+          });
+        }
+
+        paragraphRun = [];
+      };
+
+      for (const child of node.children) {
+        if (isParagraphRunNode(child)) {
+          paragraphRun.push(child);
+          continue;
+        }
+
+        flushParagraphRun();
+        nextChildren.push(child);
+      }
+
+      flushParagraphRun();
+      node.children = nextChildren;
+      return false;
+    });
+  };
+}
+
 function rehypeCollectHeadings(headings: DocumentHeading[]) {
   return (tree: HastRoot) => {
     visit(tree, "element", (node: any) => {
@@ -407,6 +633,7 @@ export async function renderMarkdownDocument(
   relativeDocumentPath: string,
 ): Promise<{ html: string; headings: DocumentHeading[] }> {
   const headings: DocumentHeading[] = [];
+  const normalizedContent = normalizeMarkdownSource(content);
 
   const file = await unified()
     .use(remarkParse)
@@ -418,7 +645,9 @@ export async function renderMarkdownDocument(
     .use(remarkMermaidBlocks)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeNormalizeLegacyCenteredBlocks)
     .use(rehypeWrapTables)
+    .use(rehypeWrapLooseParagraphRuns)
     .use(rehypeKatex, {
       strict(errorCode) {
         return errorCode === "unknownSymbol" ? "ignore" : "warn";
@@ -453,7 +682,7 @@ export async function renderMarkdownDocument(
       },
     })
     .use(rehypeStringify)
-    .process(content);
+    .process(normalizedContent);
 
   return {
     html: String(file),

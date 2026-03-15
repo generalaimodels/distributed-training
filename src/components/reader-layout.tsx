@@ -51,8 +51,9 @@ export function ReaderLayout({
     [features.hasMath, features.hasMermaid, features.hasRawHtml],
   );
   const layoutStyle = {
-    "--reader-prose-measure": focusMode ? "78ch" : "70ch",
-    "--reader-prose-wide-measure": focusMode ? "110ch" : "96ch",
+    "--reader-prose-measure": focusMode ? "94ch" : "88ch",
+    "--reader-prose-wide-measure": focusMode ? "94ch" : "88ch",
+    "--reader-sidebar-width": "332px",
   } as CSSProperties;
 
   return (
