@@ -3,6 +3,8 @@ export interface TopicTag {
   label: string;
 }
 
+export type DocumentKind = "markdown" | "pdf";
+
 export interface FeatureFlags {
   hasMath: boolean;
   hasRawHtml: boolean;
@@ -28,10 +30,14 @@ export interface FolderReference {
 }
 
 export interface DocumentMeta {
+  kind: DocumentKind;
   filePath: string;
   relativePath: string;
   routeSegments: string[];
   url: string;
+  assetUrl: string | null;
+  pageCount: number | null;
+  sourceSizeBytes: number;
   collection: TopicTag;
   folderRelativePath: string;
   folderLabel: string;

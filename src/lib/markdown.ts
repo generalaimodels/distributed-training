@@ -170,6 +170,11 @@ function resolveLocalUrl(relativeDocumentPath: string, rawUrl: string, attribute
       return `${relativeFilePathToDocRoutePath(relativeTarget)}${search}${hash}`;
     }
 
+    if (/\.pdf$/i.test(absoluteTarget) && fs.existsSync(absoluteTarget)) {
+      const relativeTarget = toPosixPath(path.relative(CONTENT_ROOT, absoluteTarget));
+      return `${relativeFilePathToDocRoutePath(relativeTarget)}${search}${hash}`;
+    }
+
     if (!path.extname(absoluteTarget) && fs.existsSync(markdownSiblingPath)) {
       const relativeTarget = toPosixPath(path.relative(CONTENT_ROOT, markdownSiblingPath));
       return `${relativeFilePathToDocRoutePath(relativeTarget)}${search}${hash}`;

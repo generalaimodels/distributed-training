@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 
 import { DocCard } from "@/components/doc-card";
 import { MermaidLoader } from "@/components/mermaid-loader";
+import { PdfViewer } from "@/components/pdf-viewer";
 import { ProseContent } from "@/components/prose-content";
 import { ReaderLayout } from "@/components/reader-layout";
 import { TagPill } from "@/components/tag-pill";
 import { getAllDocuments, getDocumentBySlug, getMoreDocumentsFromSameFolder, getRelatedDocuments } from "@/lib/content";
-import { formatLongDate } from "@/lib/formatting";
+import { formatDocumentPrimaryStat, formatDocumentSecondaryStat, formatLongDate } from "@/lib/formatting";
 
 interface DocPageProps {
   params: Promise<{
@@ -68,10 +69,15 @@ export default async function DocPage({ params }: DocPageProps) {
   const heroClassName = document.heroImage ? "doc-hero" : "doc-hero doc-hero-no-media";
   const heroGridClassName = document.heroImage ? "doc-hero-grid" : "doc-hero-grid doc-hero-grid-no-media";
   const heroFeatureLabels = [
+    document.kind === "pdf" ? "PDF" : null,
     document.features.hasRawHtml ? "Raw HTML" : null,
     document.features.hasMath ? "Math" : null,
     document.features.hasMermaid ? "Mermaid" : null,
   ].filter(Boolean);
+  const heroPreviewItems =
+    document.kind === "pdf"
+      ? ["Progressive page loading", "Smooth canvas rendering", "Outline-aware navigation", "Raw PDF access"]
+      : heroPreviewHeadings.map((heading) => heading.text);
 
   return (
     <div className="page-shell doc-page-shell">
@@ -92,8 +98,8 @@ export default async function DocPage({ params }: DocPageProps) {
             <p className="doc-summary">{document.summary}</p>
             <div className="doc-meta-line">
               <span>{formatLongDate(document.publishedAt)}</span>
-              <span>{document.readingMinutes} min read</span>
-              <span>{document.wordCount.toLocaleString("en-US")} words</span>
+              <span>{formatDocumentPrimaryStat(document)}</span>
+              <span>{formatDocumentSecondaryStat(document)}</span>
             </div>
             <div className="tag-row">
               {document.tags.map((tag) => (
@@ -110,31 +116,33 @@ export default async function DocPage({ params }: DocPageProps) {
                 </div>
                 <figcaption className="doc-hero-side-meta">
                   <span>{document.collection.label}</span>
-                  <span>{document.readingMinutes} min read</span>
-                  <span>{document.wordCount.toLocaleString("en-US")} words</span>
+                  <span>{formatDocumentPrimaryStat(document)}</span>
+                  <span>{formatDocumentSecondaryStat(document)}</span>
                 </figcaption>
               </figure>
             </div>
           ) : (
             <aside className="doc-hero-side doc-hero-side-fallback" aria-label="Document overview">
               <div className="doc-hero-fallback-card">
-                <span className="doc-hero-side-kicker">Reader brief</span>
+                <span className="doc-hero-side-kicker">{document.kind === "pdf" ? "Reader brief" : "Reader brief"}</span>
                 <div className="doc-hero-fallback-stats">
                   <div>
-                    <strong>{document.readingMinutes} min</strong>
-                    <span>Reading time</span>
+                    <strong>{formatDocumentPrimaryStat(document)}</strong>
+                    <span>{document.kind === "pdf" ? "Format" : "Reading time"}</span>
                   </div>
                   <div>
-                    <strong>{document.wordCount.toLocaleString("en-US")}</strong>
-                    <span>Words</span>
+                    <strong>{formatDocumentSecondaryStat(document)}</strong>
+                    <span>{document.kind === "pdf" ? "File detail" : "Words"}</span>
                   </div>
                 </div>
-                {heroPreviewHeadings.length > 0 ? (
+                {heroPreviewItems.length > 0 ? (
                   <div className="doc-hero-outline-preview">
-                    <span className="doc-hero-outline-title">Inside this document</span>
+                    <span className="doc-hero-outline-title">
+                      {document.kind === "pdf" ? "Inside this reader" : "Inside this document"}
+                    </span>
                     <ul className="doc-hero-outline-list">
-                      {heroPreviewHeadings.map((heading) => (
-                        <li key={heading.id}>{heading.text}</li>
+                      {heroPreviewItems.map((item) => (
+                        <li key={item}>{item}</li>
                       ))}
                     </ul>
                   </div>
@@ -151,22 +159,33 @@ export default async function DocPage({ params }: DocPageProps) {
         </div>
       </section>
 
-      <ReaderLayout
-        authors={document.authors}
-        collectionLabel={document.collection.label}
-        documentTitle={document.title}
-        features={document.features}
-        folderLabel={document.folderLabel}
-        folderRelativePath={document.folderRelativePath}
-        folderUrl={document.folderUrl}
-        headings={tocHeadings}
-        relativePath={document.relativePath}
-      >
-        <div className="doc-content-panel">
-          {document.features.hasMermaid ? <MermaidLoader /> : null}
-          <ProseContent html={document.html} hideLeadingTitle={hideLeadingTitle} />
-        </div>
-      </ReaderLayout>
+      {document.kind === "pdf" && document.assetUrl ? (
+        <PdfViewer
+          assetUrl={document.assetUrl}
+          collectionLabel={document.collection.label}
+          documentTitle={document.title}
+          folderLabel={document.folderLabel}
+          relativePath={document.relativePath}
+          sourceSizeBytes={document.sourceSizeBytes}
+        />
+      ) : (
+        <ReaderLayout
+          authors={document.authors}
+          collectionLabel={document.collection.label}
+          documentTitle={document.title}
+          features={document.features}
+          folderLabel={document.folderLabel}
+          folderRelativePath={document.folderRelativePath}
+          folderUrl={document.folderUrl}
+          headings={tocHeadings}
+          relativePath={document.relativePath}
+        >
+          <div className="doc-content-panel">
+            {document.features.hasMermaid ? <MermaidLoader /> : null}
+            <ProseContent html={document.html} hideLeadingTitle={hideLeadingTitle} />
+          </div>
+        </ReaderLayout>
+      )}
 
       {sameFolderDocuments.length > 0 ? (
         <section className="section-block">

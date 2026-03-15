@@ -42,6 +42,14 @@ export function isMarkdownFilename(filename: string): boolean {
   return /\.md$/i.test(filename);
 }
 
+export function isPdfFilename(filename: string): boolean {
+  return /\.pdf$/i.test(filename);
+}
+
+export function isRenderableContentFilename(filename: string): boolean {
+  return isMarkdownFilename(filename) || isPdfFilename(filename);
+}
+
 export function docRoutePathFromSegments(segments: string[]): string {
   return `/docs/${encodePathSegments(segments)}`;
 }

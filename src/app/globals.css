@@ -973,6 +973,20 @@ button {
   text-underline-offset: 0.15em;
 }
 
+.eyebrow-kind {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.48rem;
+  border-radius: 999px;
+  background: rgba(201, 107, 44, 0.12);
+  color: var(--accent);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .text-link {
   display: inline-flex;
   align-items: center;
@@ -1401,6 +1415,222 @@ button {
   height: 1px;
   background: linear-gradient(90deg, rgba(15, 124, 114, 0), rgba(15, 124, 114, 0.45), rgba(201, 107, 44, 0.45), rgba(201, 107, 44, 0));
   pointer-events: none;
+}
+
+.pdf-content-panel {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.1rem;
+}
+
+.pdf-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+  gap: 1rem;
+  align-items: end;
+  padding: 0.15rem 0.15rem 0.4rem;
+}
+
+.pdf-toolbar-copy {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.pdf-toolbar-copy h2 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(1.05rem, 1.35vw, 1.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+
+.pdf-toolbar-copy p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+
+.pdf-toolbar-controls {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pdf-toolbar-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.pdf-toolbar-stats span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.66rem;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink-soft);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pdf-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.pdf-control-button,
+.pdf-control-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 240, 232, 0.92)),
+    rgba(255, 255, 255, 0.74);
+  color: var(--ink);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 12px 24px rgba(16, 33, 58, 0.05);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.pdf-control-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pdf-control-link {
+  color: var(--accent);
+}
+
+.pdf-page-stack {
+  display: grid;
+  gap: 1.05rem;
+}
+
+.pdf-page-shell {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.pdf-page-header {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.pdf-page-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.62rem;
+  border-radius: 999px;
+  background: rgba(16, 33, 58, 0.06);
+  color: var(--ink-soft);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pdf-page-canvas-shell {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 0.95rem;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 1.4rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 243, 235, 0.96)),
+    rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 20px 40px rgba(16, 33, 58, 0.06);
+  overflow: hidden;
+}
+
+.pdf-page-canvas-shell canvas {
+  display: block;
+  width: min(100%, auto);
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.95rem;
+  box-shadow: 0 14px 28px rgba(16, 33, 58, 0.08);
+}
+
+.pdf-page-canvas-shell-loading {
+  align-items: center;
+}
+
+.pdf-page-canvas-shell-loading canvas {
+  opacity: 0.0001;
+}
+
+.pdf-page-rendering {
+  position: absolute;
+  inset: auto auto 1rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.66rem;
+  border-radius: 999px;
+  background: rgba(16, 33, 58, 0.08);
+  color: var(--ink-soft);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.pdf-loading-state {
+  display: grid;
+  gap: 1rem;
+}
+
+.pdf-loading-card {
+  min-height: 32rem;
+  border-radius: 1.5rem;
+  background:
+    linear-gradient(90deg, rgba(241, 234, 223, 0.78), rgba(255, 255, 255, 0.92), rgba(241, 234, 223, 0.78));
+  background-size: 240% 100%;
+  animation: skeleton-shimmer 2s linear infinite;
+}
+
+.pdf-loading-card-short {
+  min-height: 22rem;
+}
+
+.pdf-load-sentinel {
+  height: 1px;
+}
+
+.pdf-empty-state {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  padding: 1.25rem;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 1.4rem;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.pdf-empty-state h3,
+.pdf-empty-state p {
+  margin: 0;
 }
 
 .doc-aside {
@@ -2225,6 +2455,12 @@ button {
   }
 }
 
+@keyframes skeleton-shimmer {
+  100% {
+    background-position: -240% 0;
+  }
+}
+
 @media (max-width: 1100px) {
   .folder-index-grid {
     columns: 1;
@@ -2249,7 +2485,8 @@ button {
 
   .hero,
   .doc-hero-grid,
-  .doc-grid-layout {
+  .doc-grid-layout,
+  .pdf-toolbar {
     grid-template-columns: 1fr;
   }
 
@@ -2271,6 +2508,11 @@ button {
 
   .doc-aside {
     position: static;
+  }
+
+  .pdf-toolbar-stats,
+  .pdf-toolbar-actions {
+    justify-content: flex-start;
   }
 
   .coverage-grid,
@@ -2364,6 +2606,10 @@ button {
     border-radius: 1.5rem;
   }
 
+  .pdf-content-panel {
+    padding: 0.85rem;
+  }
+
   .hero,
   .listing-hero,
   .doc-hero {
@@ -2419,6 +2665,20 @@ button {
     width: 100%;
     max-width: none;
     border-radius: 1rem;
+  }
+
+  .pdf-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pdf-control-button,
+  .pdf-control-link {
+    width: 100%;
+  }
+
+  .pdf-page-canvas-shell {
+    padding: 0.65rem;
   }
 
   .toc-list {

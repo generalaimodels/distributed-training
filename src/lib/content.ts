@@ -9,6 +9,7 @@ import type {
   DocumentMeta,
   DocumentPageData,
   DocumentReference,
+  DocumentKind,
   FeatureFlags,
   FolderReference,
   FolderSummary,
@@ -20,6 +21,8 @@ import {
   CONTENT_ROOT,
   humanizeToken,
   isMarkdownFilename,
+  isPdfFilename,
+  isRenderableContentFilename,
   isWithinContentRoot,
   normalizeSlugSegment,
   relativeAssetPathToRoutePath,
@@ -53,9 +56,10 @@ interface ParsedSource {
   content: string;
 }
 
-interface MarkdownFileDescriptor {
+interface ContentFileDescriptor {
   filePath: string;
   relativePath: string;
+  kind: DocumentKind;
   size: number;
   mtimeMs: number;
   versionKey: string;
@@ -87,7 +91,19 @@ interface RepositoryState {
   tagBySlug: Map<string, TagSummary>;
 }
 
-function walkMarkdownFiles(directory: string, results: MarkdownFileDescriptor[]): void {
+function getContentKindFromFilename(filename: string): DocumentKind | null {
+  if (isMarkdownFilename(filename)) {
+    return "markdown";
+  }
+
+  if (isPdfFilename(filename)) {
+    return "pdf";
+  }
+
+  return null;
+}
+
+function walkContentFiles(directory: string, results: ContentFileDescriptor[]): void {
   const entries = fs
     .readdirSync(directory, { withFileTypes: true })
     .sort((left, right) => left.name.localeCompare(right.name));
@@ -97,13 +113,15 @@ function walkMarkdownFiles(directory: string, results: MarkdownFileDescriptor[])
 
     if (entry.isDirectory()) {
       if (!IGNORED_DIRECTORIES.has(entry.name)) {
-        walkMarkdownFiles(absolutePath, results);
+        walkContentFiles(absolutePath, results);
       }
 
       continue;
     }
 
-    if (!entry.isFile() || !isMarkdownFilename(entry.name)) {
+    const kind = entry.isFile() ? getContentKindFromFilename(entry.name) : null;
+
+    if (!kind || !isRenderableContentFilename(entry.name)) {
       continue;
     }
 
@@ -114,6 +132,7 @@ function walkMarkdownFiles(directory: string, results: MarkdownFileDescriptor[])
     results.push({
       filePath: absolutePath,
       relativePath,
+      kind,
       size: stat.size,
       mtimeMs: stat.mtimeMs,
       versionKey,
@@ -121,13 +140,13 @@ function walkMarkdownFiles(directory: string, results: MarkdownFileDescriptor[])
   }
 }
 
-function listMarkdownFiles(): MarkdownFileDescriptor[] {
-  const files: MarkdownFileDescriptor[] = [];
-  walkMarkdownFiles(CONTENT_ROOT, files);
+function listContentFiles(): ContentFileDescriptor[] {
+  const files: ContentFileDescriptor[] = [];
+  walkContentFiles(CONTENT_ROOT, files);
   return files;
 }
 
-function buildSnapshotKey(files: MarkdownFileDescriptor[]): string {
+function buildSnapshotKey(files: ContentFileDescriptor[]): string {
   return files.map((file) => file.versionKey).join("|");
 }
 
@@ -417,6 +436,17 @@ function buildDocumentSummary(content: string, frontMatter: Record<string, unkno
   return preview.length > 220 ? `${preview.slice(0, 217).trimEnd()}...` : preview;
 }
 
+function buildPdfSummary(relativePath: string, collection: TopicTag, folderLabel: string): string {
+  const segments = toPosixPath(relativePath).split("/").filter(Boolean);
+  const typeHint = segments.some((segment) => /paper|research/i.test(segment))
+    ? "research paper"
+    : segments.some((segment) => /book/i.test(segment))
+      ? "book"
+      : "PDF document";
+
+  return `Open this ${typeHint} in the in-browser reader with progressive page loading, smooth scrolling, and outline-aware navigation from ${folderLabel || collection.label}.`;
+}
+
 function buildFeatureFlags(content: string): FeatureFlags {
   return {
     hasMath: /\$\$|\\\(|\\\[|\\begin\{/.test(content),
@@ -452,7 +482,7 @@ function pushGroupedValue<T>(groups: Map<string, T[]>, key: string, value: T): v
   groups.set(key, current);
 }
 
-function getDocumentMeta(file: MarkdownFileDescriptor): DocumentMeta | null {
+function getMarkdownDocumentMeta(file: ContentFileDescriptor): DocumentMeta | null {
   const cached = documentRecordCache.get(file.relativePath);
 
   if (cached?.versionKey === file.versionKey) {
@@ -472,10 +502,14 @@ function getDocumentMeta(file: MarkdownFileDescriptor): DocumentMeta | null {
       humanizeToken(path.basename(file.relativePath, path.extname(file.relativePath)));
 
     const document = {
+      kind: "markdown",
       filePath: file.filePath,
       relativePath: file.relativePath,
       routeSegments: relativeFilePathToDocRouteSegments(file.relativePath),
       url: relativeFilePathToDocRoutePath(file.relativePath),
+      assetUrl: null,
+      pageCount: null,
+      sourceSizeBytes: file.size,
       collection,
       folderRelativePath,
       folderLabel: getFolderLabel(folderRelativePath, collection),
@@ -505,6 +539,61 @@ function getDocumentMeta(file: MarkdownFileDescriptor): DocumentMeta | null {
     console.warn(`[content] Skipping ${file.relativePath}: ${message}`);
     return null;
   }
+}
+
+function getPdfDocumentMeta(file: ContentFileDescriptor): DocumentMeta {
+  const cached = documentRecordCache.get(file.relativePath);
+
+  if (cached?.versionKey === file.versionKey) {
+    return cached.document;
+  }
+
+  const stat = fs.statSync(file.filePath);
+  const collection = deriveCollection(file.relativePath);
+  const folderRelativePath = getFolderRelativePath(file.relativePath);
+  const title = humanizeToken(path.basename(file.relativePath, path.extname(file.relativePath)));
+  const document = {
+    kind: "pdf",
+    filePath: file.filePath,
+    relativePath: file.relativePath,
+    routeSegments: relativeFilePathToDocRouteSegments(file.relativePath),
+    url: relativeFilePathToDocRoutePath(file.relativePath),
+    assetUrl: relativeAssetPathToRoutePath(file.relativePath),
+    pageCount: null,
+    sourceSizeBytes: file.size,
+    collection,
+    folderRelativePath,
+    folderLabel: getFolderLabel(folderRelativePath, collection),
+    folderUrl: relativeDirectoryPathToFolderRoutePath(folderRelativePath),
+    title,
+    summary: buildPdfSummary(file.relativePath, collection, getFolderLabel(folderRelativePath, collection)),
+    authors: [],
+    publishedAt: extractDate(file.relativePath, {}, stat),
+    heroImage: null,
+    tags: deriveTags(file.relativePath, {}),
+    wordCount: 0,
+    readingMinutes: 0,
+    features: {
+      hasMath: false,
+      hasRawHtml: false,
+      hasMermaid: false,
+    },
+  } satisfies DocumentMeta;
+
+  documentRecordCache.set(file.relativePath, {
+    versionKey: file.versionKey,
+    document,
+  });
+
+  return document;
+}
+
+function getDocumentMeta(file: ContentFileDescriptor): DocumentMeta | null {
+  if (file.kind === "pdf") {
+    return getPdfDocumentMeta(file);
+  }
+
+  return getMarkdownDocumentMeta(file);
 }
 
 function buildCollectionSummaries(documentsByCollection: Map<string, DocumentMeta[]>): CollectionSummary[] {
@@ -604,7 +693,7 @@ function buildTagSummaries(documentsByTag: Map<string, DocumentMeta[]>): TagSumm
     .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
 }
 
-function pruneStaleCaches(files: MarkdownFileDescriptor[], state: RepositoryState): void {
+function pruneStaleCaches(files: ContentFileDescriptor[], state: RepositoryState): void {
   const validRelativePaths = new Set(files.map((file) => file.relativePath));
   const validRouteKeys = new Set(state.documents.map((document) => document.routeSegments.join("/")));
 
@@ -622,7 +711,7 @@ function pruneStaleCaches(files: MarkdownFileDescriptor[], state: RepositoryStat
 }
 
 function buildRepositoryState(): RepositoryState {
-  const files = listMarkdownFiles();
+  const files = listContentFiles();
   const snapshotKey = buildSnapshotKey(files);
 
   if (repositoryStateCache?.snapshotKey === snapshotKey) {
@@ -708,9 +797,19 @@ async function loadDocumentPage(routeSegments: string[]): Promise<DocumentPageDa
   }
 
   const page = fs.promises
-    .readFile(document.filePath, "utf8")
+    .readFile(document.filePath, document.kind === "pdf" ? undefined : "utf8")
     .then(async (rawSource) => {
-      const { frontMatter, content } = parseSource(rawSource);
+      if (document.kind === "pdf") {
+        return {
+          ...document,
+          frontMatter: {},
+          content: "",
+          html: "",
+          headings: [],
+        } satisfies DocumentPageData;
+      }
+
+      const { frontMatter, content } = parseSource(rawSource as string);
       const rendered = await renderMarkdownDocument(content, document.relativePath);
 
       return {
