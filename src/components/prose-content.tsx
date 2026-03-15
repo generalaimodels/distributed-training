@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useCallback } from "react";
+import { startTransition, useCallback, useMemo } from "react";
 import type { MouseEvent } from "react";
 
 import { useRouter } from "next/navigation";
@@ -9,12 +9,18 @@ import { scrollToAnchorId } from "@/lib/reader-scroll";
 
 interface ProseContentProps {
   html: string;
+  hideLeadingTitle?: boolean;
 }
 
 const INTERNAL_ROUTE_EXPRESSION = /^\/(?:docs|tags|folders|collections)(?:\/|$)/;
 
-export function ProseContent({ html }: ProseContentProps) {
+function stripLeadingTitleHeading(html: string): string {
+  return html.replace(/^\s*<h1\b[^>]*>[\s\S]*?<\/h1>\s*/i, "");
+}
+
+export function ProseContent({ html, hideLeadingTitle = false }: ProseContentProps) {
   const router = useRouter();
+  const renderedHtml = useMemo(() => (hideLeadingTitle ? stripLeadingTitleHeading(html) : html), [hideLeadingTitle, html]);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
@@ -75,5 +81,5 @@ export function ProseContent({ html }: ProseContentProps) {
     [router],
   );
 
-  return <article className="content-prose" onClick={handleClick} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <article className="content-prose" onClick={handleClick} dangerouslySetInnerHTML={{ __html: renderedHtml }} />;
 }

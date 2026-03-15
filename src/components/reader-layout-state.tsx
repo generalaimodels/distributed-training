@@ -4,77 +4,47 @@ import { createContext, startTransition, useCallback, useContext, useEffect, use
 import type { PropsWithChildren } from "react";
 
 const READER_FOCUS_STORAGE_KEY = "distribution-training-reader-focus-mode";
-const READER_SIDEBAR_WIDTH_STORAGE_KEY = "distribution-training-reader-sidebar-width";
-
-export const READER_SIDEBAR_MIN = 300;
-export const READER_SIDEBAR_MAX = 440;
-export const READER_SIDEBAR_DEFAULT = 372;
 
 interface ReaderLayoutState {
   focusMode: boolean;
-  sidebarWidth: number;
 }
 
 interface ReaderLayoutActions {
   setFocusMode: (value: boolean) => void;
-  setSidebarWidth: (value: number) => void;
   toggleFocusMode: () => void;
 }
 
 const ReaderLayoutStateContext = createContext<ReaderLayoutState | undefined>(undefined);
 const ReaderLayoutActionsContext = createContext<ReaderLayoutActions | undefined>(undefined);
 
-function clampSidebarWidth(value: number) {
-  return Math.min(READER_SIDEBAR_MAX, Math.max(READER_SIDEBAR_MIN, value));
-}
-
 export function ReaderLayoutStateProvider({ children }: PropsWithChildren) {
   const [focusMode, setFocusModeValue] = useState(false);
-  const [sidebarWidth, setSidebarWidthValue] = useState(READER_SIDEBAR_DEFAULT);
 
   useEffect(() => {
     try {
       const savedFocusMode = window.localStorage.getItem(READER_FOCUS_STORAGE_KEY);
-      const savedSidebarWidth = window.localStorage.getItem(READER_SIDEBAR_WIDTH_STORAGE_KEY);
 
       if (savedFocusMode !== null) {
         startTransition(() => {
           setFocusModeValue(savedFocusMode === "1");
         });
       }
-
-      if (savedSidebarWidth !== null) {
-        const parsedWidth = Number.parseInt(savedSidebarWidth, 10);
-
-        if (Number.isFinite(parsedWidth)) {
-          startTransition(() => {
-            setSidebarWidthValue(clampSidebarWidth(parsedWidth));
-          });
-        }
-      }
     } catch {
-      // Ignore storage access failures and fall back to the default reading layout.
+      // Ignore storage failures and fall back to the default reading mode.
     }
   }, []);
 
   useEffect(() => {
     try {
       window.localStorage.setItem(READER_FOCUS_STORAGE_KEY, focusMode ? "1" : "0");
-      window.localStorage.setItem(READER_SIDEBAR_WIDTH_STORAGE_KEY, String(sidebarWidth));
     } catch {
-      // Ignore storage failures so the layout still works in restrictive environments.
+      // Ignore storage failures so the layout keeps working in restricted environments.
     }
-  }, [focusMode, sidebarWidth]);
+  }, [focusMode]);
 
   const setFocusMode = useCallback((value: boolean) => {
     startTransition(() => {
       setFocusModeValue(value);
-    });
-  }, []);
-
-  const setSidebarWidth = useCallback((value: number) => {
-    startTransition(() => {
-      setSidebarWidthValue(clampSidebarWidth(value));
     });
   }, []);
 
@@ -87,18 +57,16 @@ export function ReaderLayoutStateProvider({ children }: PropsWithChildren) {
   const stateValue = useMemo(
     () => ({
       focusMode,
-      sidebarWidth,
     }),
-    [focusMode, sidebarWidth],
+    [focusMode],
   );
 
   const actionsValue = useMemo(
     () => ({
       setFocusMode,
-      setSidebarWidth,
       toggleFocusMode,
     }),
-    [setFocusMode, setSidebarWidth, toggleFocusMode],
+    [setFocusMode, toggleFocusMode],
   );
 
   return (

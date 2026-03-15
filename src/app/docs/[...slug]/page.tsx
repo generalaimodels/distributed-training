@@ -16,6 +16,15 @@ interface DocPageProps {
   }>;
 }
 
+function normalizeComparableText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .replace(/[^a-z0-9]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const dynamicParams = false;
 
 export function generateStaticParams() {
@@ -49,10 +58,24 @@ export default async function DocPage({ params }: DocPageProps) {
   const relatedDocuments = getRelatedDocuments(document, 3);
   const sameFolderDocuments = getMoreDocumentsFromSameFolder(document, 4);
   const tocHeadings = document.headings.filter((heading) => heading.depth >= 2 && heading.depth <= 4);
+  const heroPreviewHeadings = tocHeadings.slice(0, 4);
+  const firstHeading = document.headings[0] ?? null;
+  const hideLeadingTitle = Boolean(
+    firstHeading &&
+      firstHeading.depth === 1 &&
+      normalizeComparableText(firstHeading.text) === normalizeComparableText(document.title),
+  );
+  const heroClassName = document.heroImage ? "doc-hero" : "doc-hero doc-hero-no-media";
+  const heroGridClassName = document.heroImage ? "doc-hero-grid" : "doc-hero-grid doc-hero-grid-no-media";
+  const heroFeatureLabels = [
+    document.features.hasRawHtml ? "Raw HTML" : null,
+    document.features.hasMath ? "Math" : null,
+    document.features.hasMermaid ? "Mermaid" : null,
+  ].filter(Boolean);
 
   return (
     <div className="page-shell doc-page-shell">
-      <section className="doc-hero">
+      <section className={heroClassName}>
         <div className="breadcrumb-row">
           <Link href="/">Home</Link>
           <span>/</span>
@@ -62,7 +85,7 @@ export default async function DocPage({ params }: DocPageProps) {
           <span>/</span>
           <Link href={document.folderUrl}>{document.folderLabel}</Link>
         </div>
-        <div className="doc-hero-grid">
+        <div className={heroGridClassName}>
           <div className="doc-hero-copy">
             <span className="section-kicker">{document.collection.label} collection</span>
             <h1>{document.title}</h1>
@@ -79,10 +102,52 @@ export default async function DocPage({ params }: DocPageProps) {
             </div>
           </div>
           {document.heroImage ? (
-            <div className="doc-hero-media">
-              <img src={document.heroImage} alt={document.title} />
+            <div className="doc-hero-side">
+              <figure className="doc-hero-media-shell">
+                <span className="doc-hero-side-kicker">Featured visual</span>
+                <div className="doc-hero-media">
+                  <img src={document.heroImage} alt={document.title} />
+                </div>
+                <figcaption className="doc-hero-side-meta">
+                  <span>{document.collection.label}</span>
+                  <span>{document.readingMinutes} min read</span>
+                  <span>{document.wordCount.toLocaleString("en-US")} words</span>
+                </figcaption>
+              </figure>
             </div>
-          ) : null}
+          ) : (
+            <aside className="doc-hero-side doc-hero-side-fallback" aria-label="Document overview">
+              <div className="doc-hero-fallback-card">
+                <span className="doc-hero-side-kicker">Reader brief</span>
+                <div className="doc-hero-fallback-stats">
+                  <div>
+                    <strong>{document.readingMinutes} min</strong>
+                    <span>Reading time</span>
+                  </div>
+                  <div>
+                    <strong>{document.wordCount.toLocaleString("en-US")}</strong>
+                    <span>Words</span>
+                  </div>
+                </div>
+                {heroPreviewHeadings.length > 0 ? (
+                  <div className="doc-hero-outline-preview">
+                    <span className="doc-hero-outline-title">Inside this document</span>
+                    <ul className="doc-hero-outline-list">
+                      {heroPreviewHeadings.map((heading) => (
+                        <li key={heading.id}>{heading.text}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                <div className="doc-hero-side-meta doc-hero-side-meta-wrap">
+                  <span>{document.folderLabel}</span>
+                  {heroFeatureLabels.map((featureLabel) => (
+                    <span key={featureLabel}>{featureLabel}</span>
+                  ))}
+                </div>
+              </div>
+            </aside>
+          )}
         </div>
       </section>
 
@@ -99,7 +164,7 @@ export default async function DocPage({ params }: DocPageProps) {
       >
         <div className="doc-content-panel">
           {document.features.hasMermaid ? <MermaidLoader /> : null}
-          <ProseContent html={document.html} />
+          <ProseContent html={document.html} hideLeadingTitle={hideLeadingTitle} />
         </div>
       </ReaderLayout>
 

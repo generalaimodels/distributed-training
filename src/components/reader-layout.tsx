@@ -37,7 +37,7 @@ export function ReaderLayout({
   headings,
   relativePath,
 }: ReaderLayoutProps) {
-  const { focusMode, sidebarWidth } = useReaderLayoutState();
+  const { focusMode } = useReaderLayoutState();
 
   const featureSummary = useMemo(
     () =>
@@ -51,9 +51,8 @@ export function ReaderLayout({
     [features.hasMath, features.hasMermaid, features.hasRawHtml],
   );
   const layoutStyle = {
-    "--reader-sidebar-width": `${focusMode ? 0 : sidebarWidth}px`,
-    "--reader-prose-measure": focusMode ? "82ch" : sidebarWidth <= 324 ? "74ch" : "72ch",
-    "--reader-prose-wide-measure": focusMode ? "118ch" : sidebarWidth <= 324 ? "102ch" : "98ch",
+    "--reader-prose-measure": focusMode ? "78ch" : "70ch",
+    "--reader-prose-wide-measure": focusMode ? "110ch" : "96ch",
   } as CSSProperties;
 
   return (
