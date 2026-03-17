@@ -32,12 +32,20 @@ export function formatDocumentPrimaryStat(document: DocumentMeta): string {
     return document.pageCount ? `${formatCompactNumber(document.pageCount)} pages` : "PDF reader";
   }
 
+  if (document.kind === "notebook") {
+    return document.readingMinutes > 0 ? `${document.readingMinutes} min read` : `${formatCompactNumber(document.notebook?.cellCount ?? 0)} cells`;
+  }
+
   return `${document.readingMinutes} min read`;
 }
 
 export function formatDocumentSecondaryStat(document: DocumentMeta): string {
   if (document.kind === "pdf") {
     return formatFileSize(document.sourceSizeBytes);
+  }
+
+  if (document.kind === "notebook") {
+    return `${formatCompactNumber(document.notebook?.cellCount ?? 0)} cells`;
   }
 
   return `${document.wordCount.toLocaleString("en-US")} words`;

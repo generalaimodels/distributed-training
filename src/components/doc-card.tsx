@@ -9,7 +9,9 @@ interface DocCardProps {
 }
 
 export function DocCard({ document }: DocCardProps) {
-  const primaryActionLabel = document.kind === "pdf" ? "Open PDF" : "Read article";
+  const primaryActionLabel =
+    document.kind === "pdf" ? "Open PDF" : document.kind === "notebook" ? "Open notebook" : "Read article";
+  const kindLabel = document.kind === "pdf" ? "PDF" : document.kind === "notebook" ? "Notebook" : null;
 
   return (
     <article className="doc-card">
@@ -20,7 +22,7 @@ export function DocCard({ document }: DocCardProps) {
         <Link href={document.folderUrl} className="eyebrow-subtle-link" scroll>
           {document.folderLabel}
         </Link>
-        {document.kind === "pdf" ? <span className="eyebrow-kind">PDF</span> : null}
+        {kindLabel ? <span className="eyebrow-kind">{kindLabel}</span> : null}
         <span>{formatLongDate(document.publishedAt)}</span>
       </div>
       <Link href={document.url} className="doc-card-link" scroll>

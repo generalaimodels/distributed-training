@@ -1640,6 +1640,245 @@ button {
   margin: 0;
 }
 
+.notebook-content-panel {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.1rem;
+}
+
+.notebook-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
+  gap: 1rem;
+  align-items: end;
+  padding: 0.15rem 0.15rem 0.4rem;
+}
+
+.notebook-toolbar-copy {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.notebook-toolbar-copy h2 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(1.05rem, 1.35vw, 1.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+
+.notebook-toolbar-copy p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+
+.notebook-toolbar-controls {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.notebook-toolbar-stats,
+.notebook-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.notebook-toolbar-stats span,
+.notebook-progress-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.66rem;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink-soft);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.notebook-load-more {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  padding: 0 0.35rem 0.45rem;
+}
+
+.notebook-load-more span {
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.content-prose .notebook-cell {
+  display: grid;
+  gap: 0.85rem;
+  width: min(100%, var(--reader-prose-wide-measure, var(--prose-wide-measure)));
+  margin: 0 auto 1.2rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 720px;
+}
+
+.content-prose .notebook-cell-markdown {
+  padding: 0;
+}
+
+.content-prose .notebook-cell-code,
+.content-prose .notebook-cell-raw {
+  padding: 1rem;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 243, 235, 0.95)),
+    rgba(255, 255, 255, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 16px 34px rgba(16, 33, 58, 0.055);
+}
+
+.content-prose .notebook-code-shell,
+.content-prose .notebook-output-group {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.content-prose .notebook-code-header,
+.content-prose .notebook-output-header,
+.content-prose .notebook-raw-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.content-prose .notebook-code-prompt,
+.content-prose .notebook-code-language,
+.content-prose .notebook-output-chip,
+.content-prose .notebook-raw-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.58rem;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.content-prose .notebook-code-prompt,
+.content-prose .notebook-output-chip {
+  color: var(--sage);
+}
+
+.content-prose .notebook-code-language,
+.content-prose .notebook-raw-chip {
+  color: var(--ink-soft);
+}
+
+.content-prose .notebook-code-pre,
+.content-prose .notebook-output-pre,
+.content-prose .notebook-raw-pre {
+  width: 100%;
+  margin: 0;
+  overflow: auto;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, #fffcf6, #f3ecde);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    0 14px 30px rgba(16, 33, 58, 0.05);
+}
+
+.content-prose .notebook-code-pre code,
+.content-prose .notebook-output-pre code,
+.content-prose .notebook-raw-pre code {
+  display: block;
+  min-width: max-content;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  font-size: 0.94rem;
+  line-height: 1.72;
+}
+
+.content-prose .notebook-output-stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.content-prose .notebook-output-group-error .notebook-output-pre {
+  background: linear-gradient(180deg, rgba(255, 245, 245, 0.95), rgba(251, 235, 235, 0.98));
+}
+
+.content-prose .notebook-output-rich,
+.content-prose .notebook-output-markdown,
+.content-prose .notebook-output-image {
+  width: 100%;
+  padding: 0.95rem;
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 14px 28px rgba(16, 33, 58, 0.045);
+  overflow: auto;
+}
+
+.content-prose .notebook-output-image {
+  display: flex;
+  justify-content: center;
+}
+
+.content-prose .notebook-output-image img,
+.content-prose .notebook-output-image svg {
+  max-width: 100%;
+  height: auto;
+  box-shadow: none;
+}
+
+.content-prose .notebook-output-markdown > :first-child {
+  margin-top: 0;
+}
+
+.content-prose .notebook-output-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.content-prose .notebook-output-markdown :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    ul,
+    ol,
+    blockquote,
+    .callout,
+    .table-wrap,
+    pre,
+    [data-rehype-pretty-code-figure],
+    figure,
+    details,
+    form
+  ) {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
+}
+
 .doc-aside {
   position: sticky;
   top: calc(var(--site-header-height) + 1rem);
@@ -1813,6 +2052,7 @@ button {
     pre,
     [data-rehype-pretty-code-figure],
     .mermaid-shell,
+    .katex-display,
     .footnotes,
     .legacy-center-block
   ) {
@@ -1840,6 +2080,7 @@ button {
     [data-rehype-pretty-code-figure],
     figure,
     .mermaid-shell,
+    .katex-display,
     .footnotes,
     .legacy-center-block
   ) {
@@ -2226,9 +2467,40 @@ button {
 
 .content-prose th,
 .content-prose td {
-  padding: 0.75rem 0.85rem;
+  padding: 0.56rem 0.78rem;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.content-prose th > :first-child,
+.content-prose td > :first-child {
+  margin-top: 0;
+}
+
+.content-prose th > :last-child,
+.content-prose td > :last-child {
+  margin-bottom: 0;
+}
+
+.content-prose th :is(p, ul, ol, blockquote, .callout, figure, pre, details, form),
+.content-prose td :is(p, ul, ol, blockquote, .callout, figure, pre, details, form) {
+  width: 100%;
+  max-width: 100%;
+  margin: 0.35rem 0;
+  margin-inline: 0;
+}
+
+.content-prose th :is(ul, ol),
+.content-prose td :is(ul, ol) {
+  padding-left: 1.05rem;
+}
+
+.content-prose th :is(code, kbd),
+.content-prose td :is(code, kbd) {
+  font-size: 0.88em;
 }
 
 .content-prose details {
@@ -2319,9 +2591,21 @@ button {
 }
 
 .content-prose .katex-display {
+  display: block;
+  width: min(100%, var(--reader-prose-wide-measure, var(--prose-wide-measure)));
+  max-width: 100%;
+  margin: 1.05rem auto 1.45rem;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0.25rem 0;
+  padding: 0.55rem 0 0.65rem;
+  scrollbar-gutter: stable both-edges;
+  -webkit-overflow-scrolling: touch;
+}
+
+.content-prose .katex-display > .katex {
+  display: inline-block;
+  min-width: max-content;
+  padding-inline: 0.1rem;
 }
 
 .mermaid-shell {
@@ -2569,7 +2853,8 @@ button {
   .hero,
   .doc-hero-grid,
   .doc-grid-layout,
-  .pdf-toolbar {
+  .pdf-toolbar,
+  .notebook-toolbar {
     grid-template-columns: 1fr;
   }
 
@@ -2594,7 +2879,9 @@ button {
   }
 
   .pdf-toolbar-stats,
-  .pdf-toolbar-actions {
+  .pdf-toolbar-actions,
+  .notebook-toolbar-stats,
+  .notebook-toolbar-actions {
     justify-content: flex-start;
   }
 
@@ -2689,7 +2976,8 @@ button {
     border-radius: 1.5rem;
   }
 
-  .pdf-content-panel {
+  .pdf-content-panel,
+  .notebook-content-panel {
     padding: 0.85rem;
   }
 
@@ -2749,7 +3037,8 @@ button {
     font-size: clamp(0.92rem, 3.8vw, 1.02rem);
   }
 
-  .pdf-toolbar-actions {
+  .pdf-toolbar-actions,
+  .notebook-toolbar-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2757,6 +3046,16 @@ button {
   .pdf-control-button,
   .pdf-control-link {
     width: 100%;
+  }
+
+  .notebook-progress-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .content-prose .notebook-cell-code,
+  .content-prose .notebook-cell-raw {
+    padding: 0.8rem;
   }
 
   .pdf-page-canvas-shell {

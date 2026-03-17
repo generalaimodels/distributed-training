@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { DocCard } from "@/components/doc-card";
 import { MermaidLoader } from "@/components/mermaid-loader";
+import { NotebookViewer } from "@/components/notebook-viewer";
 import { PdfViewer } from "@/components/pdf-viewer";
 import { ProseContent } from "@/components/prose-content";
 import { ReaderLayout } from "@/components/reader-layout";
@@ -70,6 +71,9 @@ export default async function DocPage({ params }: DocPageProps) {
   const heroGridClassName = document.heroImage ? "doc-hero-grid" : "doc-hero-grid doc-hero-grid-no-media";
   const heroFeatureLabels = [
     document.kind === "pdf" ? "PDF" : null,
+    document.kind === "notebook" ? "Notebook" : null,
+    document.kind === "notebook" && document.notebook?.isColab ? "Colab" : null,
+    document.kind === "notebook" && document.notebook?.hasOutputs ? "Outputs" : null,
     document.features.hasRawHtml ? "Raw HTML" : null,
     document.features.hasMath ? "Math" : null,
     document.features.hasMermaid ? "Mermaid" : null,
@@ -77,6 +81,13 @@ export default async function DocPage({ params }: DocPageProps) {
   const heroPreviewItems =
     document.kind === "pdf"
       ? ["Progressive page loading", "Smooth canvas rendering", "Outline-aware navigation", "Raw PDF access"]
+      : document.kind === "notebook"
+        ? [
+            document.notebook?.language ? `${document.notebook.language} kernel` : null,
+            document.notebook ? `${document.notebook.cellCount} notebook cells` : null,
+            document.notebook?.hasOutputs ? "Saved notebook outputs" : "Source-first notebook view",
+            "Load more sections on demand",
+          ].filter(Boolean)
       : heroPreviewHeadings.map((heading) => heading.text);
 
   return (
@@ -168,6 +179,29 @@ export default async function DocPage({ params }: DocPageProps) {
           relativePath={document.relativePath}
           sourceSizeBytes={document.sourceSizeBytes}
         />
+      ) : document.kind === "notebook" ? (
+        <ReaderLayout
+          authors={document.authors}
+          collectionLabel={document.collection.label}
+          documentTitle={document.title}
+          features={document.features}
+          folderLabel={document.folderLabel}
+          folderRelativePath={document.folderRelativePath}
+          folderUrl={document.folderUrl}
+          headings={tocHeadings}
+          relativePath={document.relativePath}
+        >
+          <NotebookViewer
+            assetUrl={document.assetUrl}
+            documentTitle={document.title}
+            headingAliasMap={document.notebookHeadingAliasMap ?? {}}
+            headingSectionMap={document.notebookHeadingSectionMap ?? {}}
+            metrics={document.notebook}
+            relativePath={document.relativePath}
+            sections={document.notebookSections ?? []}
+            sourceSizeBytes={document.sourceSizeBytes}
+          />
+        </ReaderLayout>
       ) : (
         <ReaderLayout
           authors={document.authors}

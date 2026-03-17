@@ -84,10 +84,10 @@ export default function HomePage() {
       <section className="hero hero-home">
         <div className="hero-copy hero-home-copy">
           <span className="section-kicker">Advanced .md to website pipeline</span>
-          <h1>Premium technical reading surfaces for every Markdown tree and PDF library in your repository.</h1>
+          <h1>Premium technical reading surfaces for every Markdown tree, notebook, and PDF library in your repository.</h1>
           <p>
-            Markdown, raw HTML, equations, code, media, citations, PDFs, and folder-aware navigation now flow into one polished
-            knowledge product instead of a generic documentation dump.
+            Markdown, raw HTML, equations, code, media, citations, notebooks, PDFs, and folder-aware navigation now flow into one
+            polished knowledge product instead of a generic documentation dump.
           </p>
           <div className="hero-actions">
             <Link href="/docs" className="button button-primary">

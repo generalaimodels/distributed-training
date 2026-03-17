@@ -17,10 +17,12 @@ import type {
   TopicTag,
 } from "@/lib/content-types";
 import { renderMarkdownDocument } from "@/lib/markdown";
+import { renderNotebookDocument, summarizeNotebookDocument } from "@/lib/notebook";
 import {
   CONTENT_ROOT,
   humanizeToken,
   isMarkdownFilename,
+  isNotebookFilename,
   isPdfFilename,
   isRenderableContentFilename,
   isWithinContentRoot,
@@ -94,6 +96,10 @@ interface RepositoryState {
 function getContentKindFromFilename(filename: string): DocumentKind | null {
   if (isMarkdownFilename(filename)) {
     return "markdown";
+  }
+
+  if (isNotebookFilename(filename)) {
+    return "notebook";
   }
 
   if (isPdfFilename(filename)) {
@@ -526,6 +532,62 @@ function getMarkdownDocumentMeta(file: ContentFileDescriptor): DocumentMeta | nu
       wordCount,
       readingMinutes: estimateReadingMinutes(wordCount),
       features: buildFeatureFlags(content),
+      notebook: null,
+    } satisfies DocumentMeta;
+
+    documentRecordCache.set(file.relativePath, {
+      versionKey: file.versionKey,
+      document,
+    });
+
+    return document;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[content] Skipping ${file.relativePath}: ${message}`);
+    return null;
+  }
+}
+
+function getNotebookDocumentMeta(file: ContentFileDescriptor): DocumentMeta | null {
+  const cached = documentRecordCache.get(file.relativePath);
+
+  if (cached?.versionKey === file.versionKey) {
+    return cached.document;
+  }
+
+  try {
+    const rawSource = fs.readFileSync(file.filePath, "utf8");
+    const notebook = summarizeNotebookDocument(rawSource);
+    const stat = fs.statSync(file.filePath);
+    const collection = deriveCollection(file.relativePath);
+    const folderRelativePath = getFolderRelativePath(file.relativePath);
+    const title = notebook.title || humanizeToken(path.basename(file.relativePath, path.extname(file.relativePath)));
+    const wordCount = notebook.wordCount;
+    const document = {
+      kind: "notebook",
+      filePath: file.filePath,
+      relativePath: file.relativePath,
+      routeSegments: relativeFilePathToDocRouteSegments(file.relativePath),
+      url: relativeFilePathToDocRoutePath(file.relativePath),
+      assetUrl: relativeAssetPathToRoutePath(file.relativePath),
+      pageCount: null,
+      sourceSizeBytes: file.size,
+      collection,
+      folderRelativePath,
+      folderLabel: getFolderLabel(folderRelativePath, collection),
+      folderUrl: relativeDirectoryPathToFolderRoutePath(folderRelativePath),
+      title,
+      summary: notebook.summary,
+      authors: notebook.authors,
+      publishedAt: extractDate(file.relativePath, notebook.frontMatter, stat),
+      heroImage: notebook.heroImageReference
+        ? resolveAssetReference(file.relativePath, notebook.heroImageReference)
+        : null,
+      tags: deriveTags(file.relativePath, notebook.frontMatter),
+      wordCount,
+      readingMinutes: estimateReadingMinutes(wordCount),
+      features: notebook.features,
+      notebook: notebook.metrics,
     } satisfies DocumentMeta;
 
     documentRecordCache.set(file.relativePath, {
@@ -578,6 +640,7 @@ function getPdfDocumentMeta(file: ContentFileDescriptor): DocumentMeta {
       hasRawHtml: false,
       hasMermaid: false,
     },
+    notebook: null,
   } satisfies DocumentMeta;
 
   documentRecordCache.set(file.relativePath, {
@@ -589,6 +652,10 @@ function getPdfDocumentMeta(file: ContentFileDescriptor): DocumentMeta {
 }
 
 function getDocumentMeta(file: ContentFileDescriptor): DocumentMeta | null {
+  if (file.kind === "notebook") {
+    return getNotebookDocumentMeta(file);
+  }
+
   if (file.kind === "pdf") {
     return getPdfDocumentMeta(file);
   }
@@ -806,6 +873,24 @@ async function loadDocumentPage(routeSegments: string[]): Promise<DocumentPageDa
           content: "",
           html: "",
           headings: [],
+          notebookSections: null,
+          notebookHeadingAliasMap: null,
+          notebookHeadingSectionMap: null,
+        } satisfies DocumentPageData;
+      }
+
+      if (document.kind === "notebook") {
+        const rendered = await renderNotebookDocument(rawSource as string, document.relativePath);
+
+        return {
+          ...document,
+          frontMatter: rendered.frontMatter,
+          content: rendered.content,
+          html: rendered.html,
+          headings: rendered.headings,
+          notebookSections: rendered.notebookSections,
+          notebookHeadingAliasMap: rendered.notebookHeadingAliasMap,
+          notebookHeadingSectionMap: rendered.notebookHeadingSectionMap,
         } satisfies DocumentPageData;
       }
 
@@ -818,6 +903,9 @@ async function loadDocumentPage(routeSegments: string[]): Promise<DocumentPageDa
         content,
         html: rendered.html,
         headings: rendered.headings,
+        notebookSections: null,
+        notebookHeadingAliasMap: null,
+        notebookHeadingSectionMap: null,
       } satisfies DocumentPageData;
     })
     .catch((error) => {

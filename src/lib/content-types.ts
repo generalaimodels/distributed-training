@@ -3,7 +3,7 @@ export interface TopicTag {
   label: string;
 }
 
-export type DocumentKind = "markdown" | "pdf";
+export type DocumentKind = "markdown" | "pdf" | "notebook";
 
 export interface FeatureFlags {
   hasMath: boolean;
@@ -15,6 +15,24 @@ export interface DocumentHeading {
   id: string;
   text: string;
   depth: number;
+}
+
+export interface NotebookMetrics {
+  cellCount: number;
+  codeCellCount: number;
+  markdownCellCount: number;
+  rawCellCount: number;
+  hasOutputs: boolean;
+  language: string | null;
+  kernelDisplayName: string | null;
+  isColab: boolean;
+}
+
+export interface NotebookSection {
+  id: string;
+  html: string;
+  headingIds: string[];
+  kind: "markdown" | "code" | "raw";
 }
 
 export interface DocumentReference {
@@ -51,6 +69,7 @@ export interface DocumentMeta {
   wordCount: number;
   readingMinutes: number;
   features: FeatureFlags;
+  notebook: NotebookMetrics | null;
 }
 
 export interface DocumentPageData extends DocumentMeta {
@@ -58,6 +77,9 @@ export interface DocumentPageData extends DocumentMeta {
   content: string;
   html: string;
   headings: DocumentHeading[];
+  notebookSections: NotebookSection[] | null;
+  notebookHeadingAliasMap: Record<string, string> | null;
+  notebookHeadingSectionMap: Record<string, number> | null;
 }
 
 export interface TagSummary {

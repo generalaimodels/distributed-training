@@ -12,7 +12,10 @@ export default function DocsPage() {
       <section className="listing-hero">
         <span className="section-kicker">Document index</span>
         <h1>All repository pages in one structured view</h1>
-        <p>The content engine reads the repository directly, so new Markdown files and PDFs show up here without restructuring the app.</p>
+        <p>
+          The content engine reads the repository directly, so new Markdown files, notebooks, and PDFs show up here without
+          restructuring the app.
+        </p>
         <div className="tag-cloud">
           {collections.map((collection) => (
             <Link key={collection.slug} href={`/collections/${collection.slug}`} className="tag-pill">

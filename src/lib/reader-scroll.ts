@@ -1,4 +1,5 @@
 const READER_GAP = 40;
+export const READER_ANCHOR_REQUEST_EVENT = "distribution-training:reader-anchor-request";
 
 export function getReaderOffset(): number {
   if (typeof document === "undefined") {
@@ -17,6 +18,17 @@ export function scrollToAnchorId(id: string): boolean {
   const target = document.getElementById(id);
 
   if (!target) {
+    if (window.location.hash !== `#${id}`) {
+      window.history.replaceState(null, "", `#${id}`);
+    }
+
+    window.dispatchEvent(
+      new CustomEvent(READER_ANCHOR_REQUEST_EVENT, {
+        detail: {
+          id,
+        },
+      }),
+    );
     return false;
   }
 

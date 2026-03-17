@@ -103,6 +103,10 @@ const BLOCK_LAYOUT_TAGS = new Set([
   "ul",
 ]);
 
+interface RenderMarkdownOptions {
+  headingIdPrefix?: string;
+}
+
 function extractHastText(node: any): string {
   if (!node) {
     return "";
@@ -271,6 +275,7 @@ function resolveLocalUrl(relativeDocumentPath: string, rawUrl: string, attribute
   const pathname = searchIndex >= 0 ? withoutHash.slice(0, searchIndex) : withoutHash;
   const absoluteTarget = path.resolve(path.join(CONTENT_ROOT, path.dirname(relativeDocumentPath)), decodeURIComponent(pathname));
   const markdownSiblingPath = `${absoluteTarget}.md`;
+  const notebookSiblingPath = `${absoluteTarget}.ipynb`;
 
   if (!isWithinContentRoot(absoluteTarget)) {
     return rawUrl;
@@ -291,8 +296,18 @@ function resolveLocalUrl(relativeDocumentPath: string, rawUrl: string, attribute
       return `${relativeFilePathToDocRoutePath(relativeTarget)}${search}${hash}`;
     }
 
+    if (/\.ipynb$/i.test(absoluteTarget) && fs.existsSync(absoluteTarget)) {
+      const relativeTarget = toPosixPath(path.relative(CONTENT_ROOT, absoluteTarget));
+      return `${relativeFilePathToDocRoutePath(relativeTarget)}${search}${hash}`;
+    }
+
     if (!path.extname(absoluteTarget) && fs.existsSync(markdownSiblingPath)) {
       const relativeTarget = toPosixPath(path.relative(CONTENT_ROOT, markdownSiblingPath));
+      return `${relativeFilePathToDocRoutePath(relativeTarget)}${search}${hash}`;
+    }
+
+    if (!path.extname(absoluteTarget) && fs.existsSync(notebookSiblingPath)) {
+      const relativeTarget = toPosixPath(path.relative(CONTENT_ROOT, notebookSiblingPath));
       return `${relativeFilePathToDocRoutePath(relativeTarget)}${search}${hash}`;
     }
   }
@@ -599,6 +614,28 @@ function rehypeCollectHeadings(headings: DocumentHeading[]) {
   };
 }
 
+function rehypePrefixHeadingIds(prefix: string | undefined) {
+  return (tree: HastRoot) => {
+    if (!prefix) {
+      return;
+    }
+
+    visit(tree, "element", (node: any) => {
+      if (!/^h[1-6]$/.test(String(node.tagName ?? ""))) {
+        return;
+      }
+
+      const id = typeof node.properties?.id === "string" ? node.properties.id.trim() : "";
+
+      if (!id) {
+        return;
+      }
+
+      node.properties.id = `${prefix}-${id}`;
+    });
+  };
+}
+
 function rehypeRewriteUrls(relativeDocumentPath: string) {
   return (tree: HastRoot) => {
     visit(tree, "element", (node: any) => {
@@ -631,6 +668,7 @@ function rehypeRewriteUrls(relativeDocumentPath: string) {
 export async function renderMarkdownDocument(
   content: string,
   relativeDocumentPath: string,
+  options: RenderMarkdownOptions = {},
 ): Promise<{ html: string; headings: DocumentHeading[] }> {
   const headings: DocumentHeading[] = [];
   const normalizedContent = normalizeMarkdownSource(content);
@@ -654,6 +692,7 @@ export async function renderMarkdownDocument(
       },
     })
     .use(rehypeSlug)
+    .use(rehypePrefixHeadingIds, options.headingIdPrefix)
     .use(rehypeCollectHeadings, headings)
     .use(rehypeRewriteUrls, relativeDocumentPath)
     .use(rehypeAutolinkHeadings, {
