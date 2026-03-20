@@ -1376,7 +1376,7 @@ button {
   display: grid;
   justify-content: center;
   grid-template-columns:
-    minmax(0, min(100%, calc(var(--reader-prose-wide-measure, var(--prose-wide-measure)) + 8rem)))
+    minmax(0, min(100%, calc(var(--reader-prose-wide-measure, var(--prose-wide-measure)) + 5rem)))
     minmax(300px, var(--reader-sidebar-width, 372px));
   gap: 1.55rem;
   align-items: start;
@@ -1391,7 +1391,7 @@ button {
 
 .doc-grid-layout-focus {
   justify-content: center;
-  grid-template-columns: minmax(0, min(100%, calc(var(--reader-prose-wide-measure, var(--prose-wide-measure)) + 9rem)));
+  grid-template-columns: minmax(0, min(100%, calc(var(--reader-prose-wide-measure, var(--prose-wide-measure)) + 6rem)));
   gap: 0;
 }
 
@@ -2018,12 +2018,10 @@ button {
 }
 
 .content-prose {
-  display: grid;
-  align-content: start;
-  justify-items: center;
-  padding: clamp(1.5rem, 2.5vw, 2.9rem);
-  font-size: clamp(0.98rem, 0.28vw + 0.92rem, 1.04rem);
-  line-height: 1.84;
+  display: block;
+  padding: clamp(0.85rem, 1.1vw, 1.12rem) clamp(1rem, 1.3vw, 1.28rem) clamp(1rem, 1.4vw, 1.32rem);
+  font-size: clamp(0.96rem, 0.22vw + 0.9rem, 1.01rem);
+  line-height: 1.6;
   min-width: 0;
   overflow-x: hidden;
 }
@@ -2056,35 +2054,9 @@ button {
     .footnotes,
     .legacy-center-block
   ) {
-  width: min(100%, var(--reader-prose-wide-measure, var(--prose-wide-measure)));
+  width: min(100%, calc(var(--reader-prose-wide-measure, var(--prose-wide-measure)) + 0.75rem));
   max-width: none;
-  margin-inline: auto;
-}
-
-.content-prose > :is(
-    p,
-    ul,
-    ol,
-    blockquote,
-    .callout,
-    details,
-    form,
-    hr,
-    h1,
-    h2,
-    h3,
-    h5,
-    h6,
-    .table-wrap,
-    pre,
-    [data-rehype-pretty-code-figure],
-    figure,
-    .mermaid-shell,
-    .katex-display,
-    .footnotes,
-    .legacy-center-block
-  ) {
-  justify-self: center;
+  margin-inline: 0;
 }
 
 .content-prose h1,
@@ -2094,8 +2066,8 @@ button {
 .content-prose h5,
 .content-prose h6 {
   position: relative;
-  width: min(100%, var(--reader-prose-wide-measure, var(--prose-wide-measure)));
-  margin: 2.4rem 0 0.9rem;
+  width: min(100%, calc(var(--reader-prose-wide-measure, var(--prose-wide-measure)) + 0.75rem));
+  margin: 1rem 0 0.26rem;
   font-family: var(--font-display), sans-serif;
   line-height: 1.05;
   letter-spacing: -0.03em;
@@ -2113,8 +2085,8 @@ button {
 }
 
 .content-prose h2 {
-  margin-top: 2.6rem;
-  padding-top: 1rem;
+  margin-top: 1rem;
+  padding-top: 0.44rem;
   font-size: clamp(1.22rem, 1.85vw, 1.66rem);
   max-width: var(--reader-prose-wide-measure, var(--prose-wide-measure));
   border-top: 1px solid rgba(16, 33, 58, 0.1);
@@ -2133,8 +2105,8 @@ button {
 }
 
 .content-prose h3 {
-  margin-top: 2rem;
-  padding-left: 0.95rem;
+  margin-top: 0.7rem;
+  padding-left: 0.72rem;
   font-size: clamp(1rem, 1.15vw, 1.2rem);
   max-width: var(--reader-prose-wide-measure, var(--prose-wide-measure));
   line-height: 1.12;
@@ -2153,8 +2125,8 @@ button {
 }
 
 .content-prose h4 {
-  margin-top: 1.4rem;
-  padding-left: 0.8rem;
+  margin-top: 0.52rem;
+  padding-left: 0.62rem;
   font-size: clamp(0.94rem, 0.95vw, 1.08rem);
   line-height: 1.16;
   letter-spacing: -0.02em;
@@ -2178,7 +2150,7 @@ button {
 
 .content-prose h5,
 .content-prose h6 {
-  margin-top: 1.9rem;
+  margin-top: 0.78rem;
   font-size: 0.78rem;
   line-height: 1.3;
   letter-spacing: 0.06em;
@@ -2188,19 +2160,39 @@ button {
 }
 
 .content-prose :is(h1, h2, h3, h4, h5, h6) + :is(p, ul, ol, blockquote, .callout, .table-wrap, figure, pre, [data-rehype-pretty-code-figure], .mermaid-shell, details, form) {
-  margin-top: 0.7rem;
+  margin-top: 0.12rem;
 }
 
 .content-prose :is(h1, h2, h3, h4, h5) + :is(h2, h3, h4, h5, h6) {
-  margin-top: 0.9rem;
+  margin-top: 0.14rem;
 }
 
 .content-prose h2 + h3 {
-  margin-top: 0.75rem;
+  margin-top: 0.08rem;
 }
 
 .content-prose h3 + h4 {
-  margin-top: 0.55rem;
+  margin-top: 0.06rem;
+}
+
+.content-prose p + :is(.katex-display, ul, ol, .table-wrap, figure, pre, [data-rehype-pretty-code-figure], .mermaid-shell) {
+  margin-top: 0.18rem;
+}
+
+.content-prose .katex-display + :is(p, ul, ol, blockquote, .callout) {
+  margin-top: 0.18rem;
+}
+
+.content-prose hr + h2 {
+  margin-top: 0.28rem;
+}
+
+.content-prose p + h2 {
+  margin-top: 0.48rem;
+}
+
+.content-prose p + h3 {
+  margin-top: 0.28rem;
 }
 
 .heading-anchor {
@@ -2233,7 +2225,7 @@ button {
 .content-prose td,
 .content-prose th,
 .content-prose label {
-  line-height: 1.84;
+  line-height: 1.64;
   overflow-wrap: break-word;
   word-break: normal;
 }
@@ -2252,12 +2244,14 @@ button {
 .content-prose figure,
 .content-prose details,
 .content-prose form {
-  margin: 1rem 0 1.4rem;
+  margin: 0.28rem 0 0.5rem;
 }
 
 .content-prose ul,
 .content-prose ol {
   padding-left: 1.35rem;
+  margin-top: 0.22rem;
+  margin-bottom: 0.46rem;
 }
 
 .content-prose li + li {
@@ -2279,6 +2273,7 @@ button {
 }
 
 .content-prose hr {
+  margin: 0.35rem 0 0.42rem;
   border: 0;
   border-top: 1px solid var(--line);
   opacity: 0.9;
@@ -2410,7 +2405,7 @@ button {
 .content-prose video,
 .content-prose iframe {
   border-radius: var(--radius-sm);
-  box-shadow: 0 16px 36px rgba(16, 33, 58, 0.08);
+  box-shadow: 0 10px 24px rgba(16, 33, 58, 0.06);
 }
 
 .content-prose svg,
@@ -2434,9 +2429,111 @@ button {
   gap: 0.55rem;
 }
 
+.content-prose .content-media-block {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.72rem;
+  width: fit-content;
+  max-width: min(100%, 60rem);
+  margin-inline: auto;
+  padding: clamp(0.4rem, 0.72vw, 0.72rem);
+  border: 1px solid rgba(16, 33, 58, 0.08);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(249, 244, 236, 0.94)),
+    rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    0 16px 34px rgba(16, 33, 58, 0.055),
+    0 1px 0 rgba(16, 33, 58, 0.03);
+  overflow: hidden;
+}
+
+.content-prose .content-media-block::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, rgba(15, 124, 114, 0.08), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(201, 107, 44, 0.07), transparent 26%);
+  pointer-events: none;
+}
+
+.content-prose .content-media-block > * {
+  position: relative;
+  z-index: 1;
+}
+
+.content-prose p.content-media-block,
+.content-prose div.content-media-block,
+.content-prose figure.content-media-block {
+  text-align: center;
+}
+
+.content-prose .content-media-block > :is(a, picture, .content-media-link) {
+  display: grid;
+  justify-items: center;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.content-prose .content-media-link {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.content-prose .content-media {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  object-fit: contain;
+  border: 1px solid rgba(16, 33, 58, 0.06);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 10px 24px rgba(16, 33, 58, 0.05);
+}
+
+.content-prose .content-media-block .content-media {
+  max-width: min(100%, 58rem);
+  max-height: min(62vh, 36rem);
+}
+
+.content-prose .content-media-block img.content-media {
+  transform: scale(1.018);
+  transform-origin: center center;
+}
+
+.content-prose .content-media-block iframe.content-media {
+  width: 100%;
+  max-height: none;
+  min-height: clamp(18rem, 58vh, 40rem);
+}
+
+.content-prose .content-media-block :is(svg, canvas).content-media {
+  width: auto;
+  max-width: 100%;
+}
+
 .content-prose figcaption {
   color: var(--ink-soft);
-  font-size: 0.94rem;
+  width: min(100%, 70ch);
+  font-size: 0.88rem;
+  line-height: 1.52;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.content-prose .content-media-block figcaption {
+  width: min(100%, 42rem);
+  padding-top: 0.62rem;
+  border-top: 1px solid rgba(16, 33, 58, 0.08);
 }
 
 .table-wrap {
@@ -2594,10 +2691,10 @@ button {
   display: block;
   width: min(100%, var(--reader-prose-wide-measure, var(--prose-wide-measure)));
   max-width: 100%;
-  margin: 1.05rem auto 1.45rem;
+  margin: 0.28rem 0 0.42rem;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0.55rem 0 0.65rem;
+  padding: 0.08rem 0 0.12rem;
   scrollbar-gutter: stable both-edges;
   -webkit-overflow-scrolling: touch;
 }

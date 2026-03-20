@@ -102,6 +102,7 @@ const BLOCK_LAYOUT_TAGS = new Set([
   "tr",
   "ul",
 ]);
+const STANDALONE_MEDIA_TAGS = new Set(["img", "picture", "svg", "canvas", "video", "iframe"]);
 
 interface RenderMarkdownOptions {
   headingIdPrefix?: string;
@@ -176,6 +177,45 @@ function isParagraphRunNode(node: any): boolean {
   return !BLOCK_LAYOUT_TAGS.has(String(node.tagName ?? "").toLowerCase());
 }
 
+function getTrimmedElementChildren(node: any): any[] {
+  return trimNodeRun(Array.isArray(node?.children) ? node.children : []);
+}
+
+function isStandaloneMediaNode(node: any): boolean {
+  if (node?.type !== "element") {
+    return false;
+  }
+
+  const tagName = String(node.tagName ?? "").toLowerCase();
+
+  if (STANDALONE_MEDIA_TAGS.has(tagName)) {
+    return true;
+  }
+
+  if (tagName === "a") {
+    const children = getTrimmedElementChildren(node);
+    return children.length === 1 && isStandaloneMediaNode(children[0]);
+  }
+
+  return false;
+}
+
+function hasStandaloneMediaContent(node: any): boolean {
+  if (node?.type !== "element") {
+    return false;
+  }
+
+  const tagName = String(node.tagName ?? "").toLowerCase();
+  const children = getTrimmedElementChildren(node);
+
+  if (tagName === "figure") {
+    const contentChildren = children.filter((child) => String(child?.tagName ?? "").toLowerCase() !== "figcaption");
+    return contentChildren.some((child) => isStandaloneMediaNode(child));
+  }
+
+  return children.length === 1 && isStandaloneMediaNode(children[0]);
+}
+
 function parseInlineImageSet(source: string, rewriter: (value: string) => string): string {
   return source
     .split(",")
@@ -213,8 +253,109 @@ function normalizeLegacyCenteredDivs(content: string): string {
   });
 }
 
+function looksLikeDisplayMathContinuation(rawValue: string): boolean {
+  const value = rawValue.trim();
+
+  if (!value) {
+    return true;
+  }
+
+  return (
+    /\\[A-Za-z]+/.test(value) ||
+    /[_^=<>+\-*/|&]/.test(value) ||
+    /[{}[\]()]/.test(value) ||
+    /^[\d\s.,;:]+$/.test(value)
+  );
+}
+
+function normalizeDisplayMathBlocks(content: string): string {
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const normalizedLines: string[] = [];
+  let index = 0;
+  let recoveredFenceIndent = "";
+
+  while (index < lines.length) {
+    const rawLine = lines[index];
+    const trimmedLine = rawLine.trim();
+
+    if (!recoveredFenceIndent) {
+      const openingMatch = rawLine.match(/^(\s*)\$\$(.*)$/);
+
+      if (!openingMatch) {
+        normalizedLines.push(rawLine);
+        index += 1;
+        continue;
+      }
+
+      const [, indent, remainder] = openingMatch;
+      const trimmedRemainder = remainder.trim();
+
+      if (!trimmedRemainder) {
+        normalizedLines.push(rawLine);
+        index += 1;
+        continue;
+      }
+
+      if (trimmedRemainder.endsWith("$$")) {
+        const innerValue = trimmedRemainder.slice(0, -2).trim();
+
+        normalizedLines.push(`${indent}$$`);
+
+        if (innerValue) {
+          normalizedLines.push(`${indent}${innerValue}`);
+        }
+
+        normalizedLines.push(`${indent}$$`);
+        index += 1;
+        continue;
+      }
+
+      normalizedLines.push(`${indent}$$`);
+      normalizedLines.push(`${indent}${remainder.trimStart()}`);
+      recoveredFenceIndent = indent;
+      index += 1;
+      continue;
+    }
+
+    if (trimmedLine === "$$") {
+      normalizedLines.push(`${recoveredFenceIndent}$$`);
+      recoveredFenceIndent = "";
+      index += 1;
+      continue;
+    }
+
+    if (trimmedLine.endsWith("$$")) {
+      const withoutClosingFence = rawLine.replace(/\s*\$\$\s*$/, "");
+
+      if (withoutClosingFence.trim()) {
+        normalizedLines.push(withoutClosingFence);
+      }
+
+      normalizedLines.push(`${recoveredFenceIndent}$$`);
+      recoveredFenceIndent = "";
+      index += 1;
+      continue;
+    }
+
+    if (!looksLikeDisplayMathContinuation(trimmedLine)) {
+      normalizedLines.push(`${recoveredFenceIndent}$$`);
+      recoveredFenceIndent = "";
+      continue;
+    }
+
+    normalizedLines.push(rawLine);
+    index += 1;
+  }
+
+  if (recoveredFenceIndent) {
+    normalizedLines.push(`${recoveredFenceIndent}$$`);
+  }
+
+  return normalizedLines.join("\n");
+}
+
 function normalizeMarkdownSource(content: string): string {
-  return normalizeLegacyCenteredDivs(content).replace(/\((\s*):(\d{2,5})(\s*)\)/g, "($1\\:$2$3)");
+  return normalizeDisplayMathBlocks(normalizeLegacyCenteredDivs(content)).replace(/\((\s*):(\d{2,5})(\s*)\)/g, "($1\\:$2$3)");
 }
 
 function directoryHasMarkdown(directoryPath: string): boolean {
@@ -525,6 +666,43 @@ function rehypeNormalizeLegacyCenteredBlocks() {
   };
 }
 
+function rehypeNormalizeMediaBlocks() {
+  return (tree: HastRoot) => {
+    visit(tree, "element", (node: any) => {
+      const tagName = String(node.tagName ?? "").toLowerCase();
+      const classNames = getClassNames(node.properties);
+
+      if (STANDALONE_MEDIA_TAGS.has(tagName)) {
+        node.properties = node.properties ?? {};
+        node.properties.className = [...new Set([...classNames, "content-media"])];
+
+        if (tagName === "img") {
+          if (typeof node.properties.loading !== "string") {
+            node.properties.loading = "lazy";
+          }
+
+          if (typeof node.properties.decoding !== "string") {
+            node.properties.decoding = "async";
+          }
+        }
+
+        return;
+      }
+
+      if (tagName === "a" && hasStandaloneMediaContent(node)) {
+        node.properties = node.properties ?? {};
+        node.properties.className = [...new Set([...classNames, "content-media-link"])];
+        return;
+      }
+
+      if ((tagName === "p" || tagName === "div" || tagName === "figure") && hasStandaloneMediaContent(node)) {
+        node.properties = node.properties ?? {};
+        node.properties.className = [...new Set([...classNames, "content-media-block"])];
+      }
+    });
+  };
+}
+
 function rehypeWrapLooseParagraphRuns() {
   return (tree: HastRoot) => {
     visit(tree, (node: any) => {
@@ -686,6 +864,7 @@ export async function renderMarkdownDocument(
     .use(rehypeNormalizeLegacyCenteredBlocks)
     .use(rehypeWrapTables)
     .use(rehypeWrapLooseParagraphRuns)
+    .use(rehypeNormalizeMediaBlocks)
     .use(rehypeKatex, {
       strict(errorCode) {
         return errorCode === "unknownSymbol" ? "ignore" : "warn";
