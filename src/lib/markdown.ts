@@ -886,7 +886,7 @@ export async function renderMarkdownDocument(
       },
     })
     .use(rehypePrettyCode, {
-      theme: "github-light",
+      theme: "github-dark",
       keepBackground: false,
       defaultLang: {
         block: "text",
