@@ -325,17 +325,18 @@ button {
 }
 
 .header-reading-progress {
-  display: grid;
-  gap: 0.28rem;
-  justify-items: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   min-width: 0;
 }
 
 .header-reading-progress-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.6rem;
+  min-width: 0;
 }
 
 .header-reading-progress-label {
@@ -343,24 +344,6 @@ button {
   font-family: var(--font-display), sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
-}
-
-.header-progress-track {
-  position: relative;
-  width: 100%;
-  height: 0.36rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background:
-    linear-gradient(180deg, rgba(16, 33, 58, 0.1), rgba(16, 33, 58, 0.06)),
-    rgba(16, 33, 58, 0.08);
-}
-
-.header-progress-value {
-  position: absolute;
-  inset: 0;
-  transform-origin: left center;
-  background: linear-gradient(90deg, var(--sage), var(--accent));
 }
 
 .reader-header-toggle {
@@ -1798,8 +1781,8 @@ button {
 .content-prose .notebook-code-pre code,
 .content-prose .notebook-output-pre code,
 .content-prose .notebook-raw-pre code {
-  font-size: 0.94rem;
-  line-height: 1.56;
+  font-size: 0.95rem;
+  line-height: 1.58;
 }
 
 .content-prose .notebook-output-stack {
@@ -2200,7 +2183,11 @@ button {
   color: rgba(16, 33, 58, 0.32);
   opacity: 0;
   transform: translateY(-0.08em);
-  transition: opacity 160ms ease;
+  text-decoration: none;
+  transition:
+    opacity 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
 .content-prose h1:hover .heading-anchor,
@@ -2291,44 +2278,46 @@ button {
   overflow-x: auto;
   width: fit-content;
   max-width: 100%;
-  min-width: min(100%, 34rem);
-  padding: 1.9rem 1.08rem 0.98rem;
-  border: 1px solid rgba(96, 122, 156, 0.22);
-  border-radius: 1.08rem;
+  min-width: min(100%, 31rem);
+  padding: 1.88rem 1.02rem 0.94rem;
+  border: 1px solid rgba(106, 126, 156, 0.24);
+  border-radius: 1.28rem;
   color: #eef4ff;
   background:
-    radial-gradient(circle at top right, rgba(15, 124, 114, 0.12), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(201, 107, 44, 0.08), transparent 26%),
-    linear-gradient(180deg, rgba(20, 27, 38, 0.985), rgba(24, 33, 46, 0.985));
+    radial-gradient(circle at top right, rgba(76, 201, 240, 0.14), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.12), transparent 31%),
+    linear-gradient(180deg, rgba(56, 63, 80, 0.96) 0 1.48rem, rgba(15, 20, 29, 0.992) 1.48rem 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 18px 34px rgba(8, 14, 24, 0.18),
-    0 1px 0 rgba(255, 255, 255, 0.03);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+    0 24px 48px rgba(8, 14, 24, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
   scrollbar-gutter: stable both-edges;
+  scrollbar-color: rgba(120, 147, 188, 0.6) rgba(255, 255, 255, 0.06);
 }
 
 .content-prose pre::before {
   content: "";
   position: absolute;
-  top: 0.66rem;
-  left: 0.82rem;
-  width: 0.46rem;
-  height: 0.46rem;
+  top: 0.67rem;
+  left: 0.86rem;
+  width: 0.52rem;
+  height: 0.52rem;
   border-radius: 999px;
-  background: #e95420;
+  background: #ff6b3d;
   box-shadow:
-    0.82rem 0 0 #f6ad3c,
-    1.64rem 0 0 #7fb36a;
+    0.96rem 0 0 #f4b844,
+    1.92rem 0 0 #79c36a;
 }
 
 .content-prose pre::after {
   content: "";
   position: absolute;
-  top: 1.36rem;
+  top: 1.44rem;
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, rgba(148, 163, 184, 0.08), rgba(148, 163, 184, 0.2), rgba(148, 163, 184, 0.08));
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.05), rgba(148, 163, 184, 0.18), rgba(148, 163, 184, 0.05));
 }
 
 .content-prose pre code {
@@ -2339,9 +2328,25 @@ button {
   border-radius: 0;
   color: #eef4ff;
   font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
-  font-size: 0.95rem;
-  line-height: 1.58;
-  letter-spacing: -0.01em;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  letter-spacing: -0.012em;
+}
+
+.content-prose :is(pre, .notebook-code-pre, .notebook-output-pre, .notebook-raw-pre) ::selection,
+.content-prose [data-rehype-pretty-code-figure] ::selection {
+  background: rgba(76, 201, 240, 0.24);
+  color: #f7fbff;
+}
+
+.content-prose :is(pre, .notebook-code-pre, .notebook-output-pre, .notebook-raw-pre) a,
+.content-prose [data-rehype-pretty-code-figure] a {
+  color: #8ddff7;
+  text-decoration-color: rgba(141, 223, 247, 0.42);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+  background: transparent;
+  box-shadow: none;
 }
 
 .content-prose kbd {
@@ -2358,44 +2363,95 @@ button {
 
 .content-prose blockquote,
 .content-prose .callout {
-  padding: 1.05rem 1.15rem 1.05rem 1.25rem;
-  border-left: 4px solid var(--sage);
-  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+  padding: 1.1rem 1.18rem 1.1rem 1.42rem;
+  border: 1px solid rgba(15, 124, 114, 0.14);
+  border-radius: 1.45rem;
   background:
-    linear-gradient(180deg, rgba(15, 124, 114, 0.1), rgba(255, 255, 255, 0.8)),
+    radial-gradient(circle at top right, rgba(76, 201, 240, 0.12), transparent 32%),
+    linear-gradient(180deg, rgba(232, 246, 244, 0.94), rgba(255, 255, 255, 0.92)),
     rgba(15, 124, 114, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.68),
+    0 16px 34px rgba(16, 33, 58, 0.055);
+}
+
+.content-prose blockquote::after,
+.content-prose .callout::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.32rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--sage), rgba(76, 201, 240, 0.9), rgba(255, 255, 255, 0.15));
 }
 
 .content-prose .callout {
-  border-left-color: var(--accent);
+  border-color: rgba(201, 107, 44, 0.16);
   background:
-    linear-gradient(180deg, rgba(201, 107, 44, 0.1), rgba(255, 255, 255, 0.72)),
+    radial-gradient(circle at top right, rgba(243, 204, 172, 0.22), transparent 30%),
+    linear-gradient(180deg, rgba(253, 245, 236, 0.95), rgba(255, 255, 255, 0.92)),
     rgba(201, 107, 44, 0.08);
+}
+
+.content-prose .callout::after {
+  background: linear-gradient(180deg, var(--accent), rgba(249, 115, 22, 0.86), rgba(255, 255, 255, 0.18));
 }
 
 .content-prose .callout::before {
   content: attr(data-callout-title);
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
   margin-bottom: 0.55rem;
+  padding: 0.28rem 0.62rem;
+  border: 1px solid rgba(201, 107, 44, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
+  font-size: 0.73rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
 .content-prose .callout-note {
-  background: rgba(15, 124, 114, 0.08);
-  border-left-color: var(--sage);
+  border-color: rgba(15, 124, 114, 0.15);
+  background:
+    radial-gradient(circle at top right, rgba(76, 201, 240, 0.12), transparent 32%),
+    linear-gradient(180deg, rgba(232, 246, 244, 0.96), rgba(255, 255, 255, 0.92));
+}
+
+.content-prose .callout-note::before {
+  border-color: rgba(15, 124, 114, 0.16);
+  color: var(--sage);
 }
 
 .content-prose .callout-warning,
 .content-prose .callout-caution {
-  background: rgba(201, 107, 44, 0.12);
-  border-left-color: var(--accent);
+  border-color: rgba(201, 107, 44, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(243, 204, 172, 0.22), transparent 30%),
+    linear-gradient(180deg, rgba(253, 246, 238, 0.96), rgba(255, 255, 255, 0.92));
 }
 
 .content-prose .callout-error {
-  background: rgba(180, 55, 55, 0.08);
-  border-left-color: #b43737;
+  border-color: rgba(180, 55, 55, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(233, 80, 80, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(252, 240, 240, 0.96), rgba(255, 255, 255, 0.92));
+}
+
+.content-prose .callout-error::after {
+  background: linear-gradient(180deg, #b43737, rgba(233, 80, 80, 0.86), rgba(255, 255, 255, 0.18));
+}
+
+.content-prose .callout-error::before {
+  border-color: rgba(180, 55, 55, 0.18);
+  color: #b43737;
 }
 
 .content-prose .directive {
@@ -2463,6 +2519,13 @@ button {
 .content-prose svg,
 .content-prose canvas {
   height: auto;
+}
+
+.content-prose .katex svg {
+  max-width: none;
+  height: inherit;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .content-prose iframe {
@@ -2712,6 +2775,23 @@ button {
   font-size: 0.88em;
 }
 
+.content-prose th .katex-display,
+.content-prose td .katex-display {
+  width: 100%;
+  max-width: 100%;
+  margin: 0.18rem 0;
+  padding: 0.08rem 0 0.1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-gutter: stable;
+}
+
+.content-prose th .katex-display > .katex,
+.content-prose td .katex-display > .katex {
+  display: inline-block;
+  min-width: max-content;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .content-prose tbody tr:hover td {
     background: rgba(240, 246, 245, 0.88);
@@ -2781,13 +2861,14 @@ button {
   display: block;
   margin: 0 -1.2rem;
   padding: 0 1.2rem;
-  border-left: 3px solid rgba(15, 124, 114, 0.92);
-  background: linear-gradient(90deg, rgba(15, 124, 114, 0.22), rgba(15, 124, 114, 0.06));
+  border-left: 2px solid rgba(56, 189, 248, 0.78);
+  background: linear-gradient(90deg, rgba(76, 201, 240, 0.16), rgba(76, 201, 240, 0.08) 44%, rgba(76, 201, 240, 0));
 }
 
 .highlighted-chars {
   border-radius: 0.3rem;
-  background: rgba(201, 107, 44, 0.2);
+  background: rgba(255, 190, 92, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 190, 92, 0.16);
 }
 
 .content-prose .footnotes {
@@ -2885,6 +2966,12 @@ button {
   .content-prose a:hover {
     color: #b55d24;
     text-decoration-color: rgba(181, 93, 36, 0.55);
+  }
+
+  .content-prose .heading-anchor:hover {
+    color: rgba(76, 201, 240, 0.94);
+    background: rgba(76, 201, 240, 0.12);
+    text-decoration: none;
   }
 }
 
@@ -3053,7 +3140,7 @@ button {
   }
 
   .header-reading-progress {
-    justify-items: stretch;
+    justify-content: flex-start;
   }
 
   .doc-page-shell {
@@ -3160,6 +3247,7 @@ button {
   .header-reading-progress-row {
     flex-wrap: wrap;
     align-items: flex-start;
+    justify-content: flex-start;
   }
 
   .reader-header-toggle {

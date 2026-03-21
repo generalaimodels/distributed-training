@@ -354,8 +354,196 @@ function normalizeDisplayMathBlocks(content: string): string {
   return normalizedLines.join("\n");
 }
 
+function isMarkdownTableSeparator(line: string): boolean {
+  return /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?\s*$/.test(line.trim());
+}
+
+function isEscapedCharacter(source: string, index: number): boolean {
+  let backslashCount = 0;
+  let cursor = index - 1;
+
+  while (cursor >= 0 && source[cursor] === "\\") {
+    backslashCount += 1;
+    cursor -= 1;
+  }
+
+  return backslashCount % 2 === 1;
+}
+
+function findClosingInlineDelimiter(source: string, startIndex: number, delimiter: string): number {
+  let index = startIndex;
+
+  while (index < source.length) {
+    const matchIndex = source.indexOf(delimiter, index);
+
+    if (matchIndex === -1) {
+      return -1;
+    }
+
+    if (!isEscapedCharacter(source, matchIndex)) {
+      return matchIndex;
+    }
+
+    index = matchIndex + delimiter.length;
+  }
+
+  return -1;
+}
+
+function escapePipesInMarkdownTableRow(row: string): string {
+  let result = "";
+  let index = 0;
+  let activeCodeDelimiter: string | null = null;
+  let activeMathDelimiter: string | null = null;
+
+  while (index < row.length) {
+    if (activeCodeDelimiter) {
+      if (row.startsWith(activeCodeDelimiter, index)) {
+        result += activeCodeDelimiter;
+        index += activeCodeDelimiter.length;
+        activeCodeDelimiter = null;
+        continue;
+      }
+
+      if (row[index] === "|") {
+        result += "\\|";
+        index += 1;
+        continue;
+      }
+
+      result += row[index];
+      index += 1;
+      continue;
+    }
+
+    if (activeMathDelimiter) {
+      if (row.startsWith(activeMathDelimiter, index) && !isEscapedCharacter(row, index)) {
+        result += activeMathDelimiter;
+        index += activeMathDelimiter.length;
+        activeMathDelimiter = null;
+        continue;
+      }
+
+      if (row[index] === "|") {
+        result += "\\|";
+        index += 1;
+        continue;
+      }
+
+      result += row[index];
+      index += 1;
+      continue;
+    }
+
+    if (row[index] === "`") {
+      let delimiterLength = 1;
+
+      while (row[index + delimiterLength] === "`") {
+        delimiterLength += 1;
+      }
+
+      const delimiter = "`".repeat(delimiterLength);
+
+      if (findClosingInlineDelimiter(row, index + delimiterLength, delimiter) !== -1) {
+        activeCodeDelimiter = delimiter;
+      }
+
+      result += delimiter;
+      index += delimiterLength;
+      continue;
+    }
+
+    if (row.startsWith("\\(", index) && findClosingInlineDelimiter(row, index + 2, "\\)") !== -1) {
+      activeMathDelimiter = "\\)";
+      result += "\\(";
+      index += 2;
+      continue;
+    }
+
+    if (row.startsWith("\\[", index) && findClosingInlineDelimiter(row, index + 2, "\\]") !== -1) {
+      activeMathDelimiter = "\\]";
+      result += "\\[";
+      index += 2;
+      continue;
+    }
+
+    if (row.startsWith("$$", index) && !isEscapedCharacter(row, index) && findClosingInlineDelimiter(row, index + 2, "$$") !== -1) {
+      activeMathDelimiter = "$$";
+      result += "$$";
+      index += 2;
+      continue;
+    }
+
+    if (row[index] === "$" && !isEscapedCharacter(row, index) && findClosingInlineDelimiter(row, index + 1, "$") !== -1) {
+      activeMathDelimiter = "$";
+      result += "$";
+      index += 1;
+      continue;
+    }
+
+    result += row[index];
+    index += 1;
+  }
+
+  return result;
+}
+
+function normalizeMarkdownTablePipes(content: string): string {
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const normalizedLines = [...lines];
+  let activeFence: { character: "`" | "~"; length: number } | null = null;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const fenceMatch = line.match(/^\s*([`~])\1{2,}/);
+
+    if (fenceMatch) {
+      const character = fenceMatch[1] as "`" | "~";
+      const length = fenceMatch[0].trim().length;
+
+      if (!activeFence) {
+        activeFence = { character, length };
+      } else if (activeFence.character === character && length >= activeFence.length) {
+        activeFence = null;
+      }
+
+      continue;
+    }
+
+    if (activeFence || index + 1 >= lines.length) {
+      continue;
+    }
+
+    if (!line.includes("|") || !isMarkdownTableSeparator(lines[index + 1])) {
+      continue;
+    }
+
+    normalizedLines[index] = escapePipesInMarkdownTableRow(line);
+
+    let rowIndex = index + 2;
+
+    while (rowIndex < lines.length) {
+      const candidate = lines[rowIndex];
+
+      if (!candidate.trim() || !candidate.includes("|")) {
+        break;
+      }
+
+      normalizedLines[rowIndex] = escapePipesInMarkdownTableRow(candidate);
+      rowIndex += 1;
+    }
+
+    index = rowIndex - 1;
+  }
+
+  return normalizedLines.join("\n");
+}
+
 function normalizeMarkdownSource(content: string): string {
-  return normalizeDisplayMathBlocks(normalizeLegacyCenteredDivs(content)).replace(/\((\s*):(\d{2,5})(\s*)\)/g, "($1\\:$2$3)");
+  return normalizeMarkdownTablePipes(normalizeDisplayMathBlocks(normalizeLegacyCenteredDivs(content))).replace(
+    /\((\s*):(\d{2,5})(\s*)\)/g,
+    "($1\\:$2$3)",
+  );
 }
 
 function directoryHasMarkdown(directoryPath: string): boolean {
@@ -886,7 +1074,7 @@ export async function renderMarkdownDocument(
       },
     })
     .use(rehypePrettyCode, {
-      theme: "github-dark",
+      theme: "vitesse-black",
       keepBackground: false,
       defaultLang: {
         block: "text",

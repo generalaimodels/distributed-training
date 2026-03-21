@@ -113,9 +113,6 @@ export function SiteHeader() {
                   <span className="reader-header-toggle-label">{focusMode ? "Show outline" : "Focus read"}</span>
                 </button>
               </div>
-              <div className="header-progress-track" aria-hidden="true">
-                <span className="header-progress-value" style={{ transform: `scaleX(${readingState.progress})` }} />
-              </div>
             </div>
           </div>
         ) : null}
